@@ -1,0 +1,13 @@
+name: Shiny_DESeq2_Tool
+title: Shiny_DESeq2_Tool
+username:
+account: jonathanwaehrer
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4341524
+bundleId: 4776431
+url: https://jonathanwaehrer.shinyapps.io/Shiny_DESeq2_Tool/
+when: 1625134322.41604
+lastSyncTime: 1625134322.41605
+asMultiple: FALSE
+asStatic: FALSE
