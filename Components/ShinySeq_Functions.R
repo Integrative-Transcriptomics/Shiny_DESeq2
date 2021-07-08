@@ -49,7 +49,7 @@ sortThatData = function(rawCounts, infoData, gffData){
   
   
   # Add a merged-treatment column to sample prep:
-  is_treatment = grepl('Condition..treatment', colnames(infoData))
+  is_treatment = grepl('condition', colnames(infoData), ignore.case = TRUE)
   treatments = infoData[,is_treatment]
   merged_treatments = unite(treatments, "merged", sep = ", ")
   infoData$All_conditions = merged_treatments$merged
