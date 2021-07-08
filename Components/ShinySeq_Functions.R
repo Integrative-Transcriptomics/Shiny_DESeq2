@@ -52,7 +52,7 @@ sortThatData = function(rawCounts, infoData, gffData){
   is_treatment = grepl('Condition..treatment', colnames(infoData))
   treatments = infoData[,is_treatment]
   merged_treatments = unite(treatments, "merged", sep = ", ")
-  infoData$All_treatments = merged_treatments$merged
+  infoData$All_conditions = merged_treatments$merged
   
   # Change sample (column) names of rawCounts to sample prep (with suffix _1, _2, ... for replicates)
   merged_treatments = unite(treatments, "merged", sep = "_")

@@ -130,7 +130,7 @@ server = shinyServer(function(input, output, session){
         
         #### PCA ####
         # update PCA select inputs: 
-        is_treatment = grepl('treatment', colnames(colData(dds))) 
+        is_treatment = grepl("condition", colnames(colData(dds)), ignore.case = TRUE)
         updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
         updateSelectInput(session, "pca2", choices = colnames(colData(dds))[is_treatment])
         
