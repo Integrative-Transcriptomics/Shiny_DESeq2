@@ -33,10 +33,11 @@ sortThatData = function(rawCounts, infoData, gffData){
     }
   }
   
-  #row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
-  # row.names(rawCounts) = rawCounts[, 1]             # set row names of raw data to gene ID
+  row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
+  # row.names(rawCounts) = rawCounts[, 1]              # set row names of raw data to gene ID
   rawCounts = rawCounts[,-(2:7)]                     
   #infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
+  infoData = infoData[row.names(infoData) %in% colnames(rawCounts)[-1],]       # remove all samples from sample prep file which are not in counts
   
   # Change row names of raw counts to "locus_tag, gene name" (only tag, if gff-file has no corresponding gene): 
   names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey == "Gene",]$Name  # Match locus_tag of gff with Geneid and get gene names
