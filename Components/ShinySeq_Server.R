@@ -46,6 +46,16 @@ server = shinyServer(function(input, output, session){
     output$countTable = renderTable(rawCounts, rownames = TRUE)
     output$designTable = renderTable(infoData, rownames = TRUE)
     
+    # download counts
+    output$downloadCounts = downloadHandler(
+      filename = function() {
+        paste0("sorted_counts.txt")
+      },
+      content = function(file) {
+        write.csv(dats[[1]], file, row.names = TRUE)
+      }
+    )
+    
     ## UPDATE SELECINPUT FOR DESEQ BASED ON INFO DATA ##
     updateSelectInput(session, "variable", choices = factor(colnames(infoData)))
     

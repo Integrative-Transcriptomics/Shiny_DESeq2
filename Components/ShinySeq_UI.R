@@ -55,7 +55,7 @@ ui = fluidPage(
                       ## Main panel displaying data, results, plots ##
                       mainPanel(tabsetPanel(type = "tabs",
                                             # Raw data and info table
-                                            tabPanel("Raw counts", tableOutput("countTable")),
+                                            tabPanel("Raw counts", downloadButton("downloadCounts", "Download"), tableOutput("countTable")),
                                             tabPanel("Design", tableOutput("designTable")),
                                             # Normalized data and results
                                             tabPanel("Normalized Counts", tableOutput("normalizedTable")),

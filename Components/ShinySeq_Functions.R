@@ -33,10 +33,10 @@ sortThatData = function(rawCounts, infoData, gffData){
     }
   }
   
-  row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
+  #row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
   # row.names(rawCounts) = rawCounts[, 1]             # set row names of raw data to gene ID
   rawCounts = rawCounts[,-(2:7)]                     
-  infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
+  #infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
   
   # Change row names of raw counts to "locus_tag, gene name" (only tag, if gff-file has no corresponding gene): 
   names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey == "Gene",]$Name  # Match locus_tag of gff with Geneid and get gene names
@@ -54,10 +54,11 @@ sortThatData = function(rawCounts, infoData, gffData){
   merged_treatments = unite(treatments, "merged", sep = ", ")
   infoData$All_conditions = merged_treatments$merged
   
-  # Change sample (column) names of rawCounts to sample prep (with suffix _1, _2, ... for replicates)
+  # Change sample (column) names of rawCounts to sample prep (with suffix _1, _2, ... for replicates) and sort columns of counts according to info data
   merged_treatments = unite(treatments, "merged", sep = "_")
   merged_treatments = make.unique.2(merged_treatments$merged, sep = "_") # enumarate duplicates
   colnames(rawCounts)[-1] = merged_treatments
+  rawCounts = rawCounts[,c("Geneid", merged_treatments)]  # sort 
   row.names(infoData) = merged_treatments
   
   return(list(rawCounts, infoData))     
