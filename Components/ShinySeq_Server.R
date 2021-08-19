@@ -127,7 +127,7 @@ server = shinyServer(function(input, output, session){
       }
       ) # add contrast to overview table close
       
-      # Download overview table as .tsv:
+      # Download button overview table as .tsv:
       output$downloadOverview = downloadHandler(
         filename = "overview.tsv",
         content = function(file) {
@@ -135,7 +135,7 @@ server = shinyServer(function(input, output, session){
         }
       )
       
-      # Clear overview table:
+      # Clear button for overview table:
       observeEvent(input$clearOverview, {
         overview <<- data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))
         output$overviewTable = renderTable(overview, rownames = TRUE)
@@ -149,12 +149,15 @@ server = shinyServer(function(input, output, session){
         }
         req(dds)
         
-        # get results
-        ddsRes = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrast1, input$contrast2)) # significance level is chosen by user via slider
-        output$resTable = renderTable(as.data.frame(ddsRes), rownames = TRUE)
+        # get results, add gene & description column
+        ddsRes = as.data.frame(results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrast1, input$contrast2))) # significance level is chosen by user via slider
+        ddsRes = addGeneNameCol(ddsRes)
+        ddsRes = addDescriptionCol(ddsRes, gffdat)  # read in of gffdat already happened at the very beginning
+        ddsRes = ddsRes[,c(1,7,2:6,8)]
+        output$resTable = renderTable(ddsRes, rownames = TRUE)
         
         significant_results = filterSignificantGenes(dds_results = ddsRes, alpha = input$alpha, logFCThreshold = 1)
-        output$significantTable = renderTable(as.data.frame(significant_results), rownames = TRUE)
+        output$significantTable = renderTable(significant_results, rownames = TRUE)
         
         # in case user specified a different normalization method, display message that results table and volcano plots are still based on DESeq standard:
         if(input$normMethod != "Size Factor Division"){

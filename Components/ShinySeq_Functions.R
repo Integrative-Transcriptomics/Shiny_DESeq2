@@ -1,7 +1,7 @@
 #### =========== SHINYSEQ FUNCTIONS ========== ####
 # Functions to be used in the server component
 
-
+## MISC ##
 
 # Alter version of make.unique
 make.unique.2 = function(x, sep='.'){
@@ -11,6 +11,7 @@ make.unique.2 = function(x, sep='.'){
 }
 
 
+## RAW DATA MANIPULATION ##
 
 # Method to sort count data and infoData according to the experimental setup and gff-file
 sortThatData = function(rawCounts, infoData, gffData){
@@ -69,7 +70,6 @@ sortThatData = function(rawCounts, infoData, gffData){
 }
 
 
-
 # Method to log-transform AND remove rows containing -Inf values 
 logTransform = function(dataset){
   log2normCounts = log2(dataset)                   # produces -inf counts that were filtered (set to 0) by DESeq => set values to NA and ignore.
@@ -79,7 +79,9 @@ logTransform = function(dataset){
 }
 
 
-# Method to filter results data so it only contains significant genes (log FC >= 1 & p < alpha)
+## RESULTS TABLES MANIPULATION ##
+
+# Method to filter results data so it only contains significant genes (log FC >= 1 & p < alpha):
 filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
   dataset = na.omit(dds_results)
   significant_data = dataset[(abs(dataset$log2FoldChange) > logFCThreshold & dataset$padj < alpha), ]
@@ -94,20 +96,60 @@ filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
 
 # Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
 significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
-  
-  dataset = as.data.frame(na.omit(dds_results))
   comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
   
-  # Get infos from data:
-  up =  nrow(dataset[(dataset$log2FoldChange > 0),])
-  down = nrow(dataset[(dataset$log2FoldChange < 0),])
-  total = nrow(dataset)
+  if(dds_results[1,1] == "no significant genes found!"){
+    up = 0
+    down = 0
+    total = 0
+  }
+  else{
+    dataset = as.data.frame(na.omit(dds_results))
+    # Get infos from data:
+    up =  nrow(dataset[(dataset$log2FoldChange > 0),])
+    down = nrow(dataset[(dataset$log2FoldChange < 0),])
+    total = nrow(dataset)
+  }
   
   overview = data.frame(comparisonString, up, down, total)
   colnames(overview) = c("Conditions/Comparison", "UP", "DOWN", "TOTAL")
   return(overview)
 }
 
+# Add new column "Gene name" to table (assumes that row.names is currently: 'locus tag, gene name'): 
+addGeneNameCol = function(dds_results){
+  if(dds_results[1,1] == "no significant genes found!"){
+    return(dds_results)
+  }
+  else{
+    # Separate row.names:
+    splitVector = strsplit(row.names(dds_results), ", ")
+    splitData = t(as.data.frame(splitVector))
+    # Assign:
+    row.names(dds_results) = splitData[,1]
+    dds_results$'Gene name' = splitData[,2]
+    return(dds_results)
+  }
+}
+
+# Add new column "Description" to table (by parsing 'product' of a given gff-file)
+addDescriptionCol = function(dds_results, gff){
+  if(dds_results[1,1] == "no significant genes found!"){
+    return(dds_results)
+  }
+  else{
+    # get CDS entries of gff-file and remove (potentially) duplicated locus tags
+    gff = gff[gff$gbkey == "CDS",]
+    gff = gff[!duplicated(gff$locus_tag),]
+    
+    dds_results$Description = gff[gff$locus_tag %in% row.names(dds_results),]$product
+    return(dds_results)
+  }
+}
+
+
+
+## PLOT RELATED ##
 
 # Method that creates a volcano plot using ggplot2 
 erupt = function(dds_results, logFCthreshold, alpha){
