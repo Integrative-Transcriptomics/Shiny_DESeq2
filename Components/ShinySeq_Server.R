@@ -87,14 +87,62 @@ server = shinyServer(function(input, output, session){
       
       output$normalizedTable = renderTable(normCounts, rownames = TRUE) 
       
-      
-      ## DISPLAY RESULTS ##
-      
       ## Update results select inputs
       variables = levels(factor(infoData[, c(input$variable)]))
       updateSelectInput(session, "contrast1", choices = variables)
       updateSelectInput(session, "contrast2", choices = variables)
       
+      updateSelectInput(session, "contrastUpDown_1", choices = variables)
+      updateSelectInput(session, "contrastUpDown_2", choices = variables)
+      
+      #########################
+      ## UP-/DOWN-REGULATION ##
+      #########################
+      
+      overview = data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))  # empty table, will get updated
+      output$overviewTable = renderTable(overview, rownames = TRUE)
+      observeEvent(input$addToOverview, {
+        if(is.null(dds)){
+          showNotification("Please run DESeq first", type = "error")
+        }
+        req(dds)
+        
+        if(input$contrastUpDown_1 == input$contrastUpDown_2){
+          # DESeq crashes if experimental groups are the same
+          showNotification("Experimental groups must differ!", type = "error")
+        }
+        else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview[,1]){
+          showNotification("Contrast was already added to overview Table!", type = "error")
+        }
+        else{
+          # get results, filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
+          resultsOverview = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, input$contrastUpDown_2))
+          significant_results = filterSignificantGenes(dds_results = resultsOverview, alpha = input$alpha, logFCThreshold = 1)
+          significant_overview = significantOverview(significant_results, input$contrastUpDown_1, input$contrastUpDown_2)
+          
+          # Update & render table
+          overview <<- rbind(overview, significant_overview)
+          output$overviewTable = renderTable(overview, rownames = TRUE)
+        }
+      }
+      ) # add contrast to overview table close
+      
+      # Download overview table as .tsv:
+      output$downloadOverview = downloadHandler(
+        filename = "overview.tsv",
+        content = function(file) {
+          write.table(overview, file, row.names = FALSE, sep = "\t")
+        }
+      )
+      
+      # Clear overview table:
+      observeEvent(input$clearOverview, {
+        overview <<- data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))
+        output$overviewTable = renderTable(overview, rownames = TRUE)
+      })
+      
+      
+      ## DISPLAY RESULTS ##
       observeEvent(input$results, {
         if(is.null(dds)){
           showNotification("Please run DESeq first", type = "error")
@@ -133,7 +181,7 @@ server = shinyServer(function(input, output, session){
           }
         )
         
-  
+        
         ##################
         ##### PLOTS ######
         ##################

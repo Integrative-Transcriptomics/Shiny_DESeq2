@@ -90,7 +90,22 @@ filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
   else{
     return(data.frame("no significant genes found!"))
   }
+}
+
+# Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
+significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
   
+  dataset = as.data.frame(na.omit(dds_results))
+  comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
+  
+  # Get infos from data:
+  up =  nrow(dataset[(dataset$log2FoldChange > 0),])
+  down = nrow(dataset[(dataset$log2FoldChange < 0),])
+  total = nrow(dataset)
+  
+  overview = data.frame(comparisonString, up, down, total)
+  colnames(overview) = c("Conditions/Comparison", "UP", "DOWN", "TOTAL")
+  return(overview)
 }
 
 

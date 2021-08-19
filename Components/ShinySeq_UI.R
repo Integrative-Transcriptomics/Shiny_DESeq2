@@ -67,7 +67,7 @@ ui = fluidPage(
                                                      )
                       )
                       ) # main panel close
-             ), # tabPanel close
+             ), # tabPanel "Data Upload & Analysis Parameters" close
              tabPanel("Plots",
                       tabsetPanel(type = "tabs",
                                   # BOXPLOTS 
@@ -123,6 +123,17 @@ ui = fluidPage(
                                            ),
                                            mainPanel(plotOutput("volc", brush = "volc_brush"), verbatimTextOutput("volc_info")))
                       )
+             ), # tabPanel "Plots" close
+             ### OVERVIEW TABLE OVER UP- AND DOWNREGULATED GENES ### 
+             tabPanel("Up-/Downregulation Overview",
+                      sidebarPanel(
+                        h4("Specify Contrast"),
+                        selectInput("contrastUpDown_1", "First Experimental Group:", "-"),
+                        selectInput("contrastUpDown_2", "Second Experimental Group:", "-"),
+                        actionButton("addToOverview", "Add to table!", width = '100%',class = "btn-warning"),
+                        actionButton("clearOverview", "Clear table!", width = '100%',class = "btn-warning"),
+                      ), # sidebarPanel close
+                      mainPanel(downloadButton("downloadOverview", "Download"), tableOutput("overviewTable"))
              ) # tabPanel close
   ) # navBarPage close
 ) # ui close
