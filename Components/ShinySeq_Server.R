@@ -152,8 +152,9 @@ server = shinyServer(function(input, output, session){
         # get results, add gene & description column
         ddsRes = as.data.frame(results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrast1, input$contrast2))) # significance level is chosen by user via slider
         ddsRes = addGeneNameCol(ddsRes)
-        ddsRes = addDescriptionCol(ddsRes, gffdat)  # read in of gffdat already happened at the very beginning
-        ddsRes = ddsRes[,c(1,7,2:6,8)]
+        ddsRes = addDescriptionCol(ddsRes, gffdat)  # read-in of gff-data already happened at the very beginning
+        ddsRes = addFoldChangeCol(ddsRes)
+        ddsRes = ddsRes[,c(7,1,2,9,3:6,8)]
         output$resTable = renderTable(ddsRes, rownames = TRUE)
         
         significant_results = filterSignificantGenes(dds_results = ddsRes, alpha = input$alpha, logFCThreshold = 1)

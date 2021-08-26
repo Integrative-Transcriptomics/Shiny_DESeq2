@@ -147,6 +147,15 @@ addDescriptionCol = function(dds_results, gff){
   }
 }
 
+# Add new column "foldchange" to table
+addFoldChangeCol = function(dds_results){
+  dds_results$foldChange = NA
+  dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$foldChange = 2^(dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
+  dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$foldChange = -2^abs(dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
+  
+  return(dds_results)
+}
+
 
 
 ## PLOT RELATED ##

@@ -39,8 +39,8 @@ ui = fluidPage(
                         ## Contrast comparison of experimental variables ## 
                         div(style = "margin-top: +45px"),
                         h4("Experimental Comparison"),
-                        selectInput("contrast1", "First variable:", "-"),
-                        selectInput("contrast2", "Second variable:", "-"),
+                        selectInput("contrast1", 'First variable ("baseline"):', "-"),
+                        selectInput("contrast2", 'Second variable:', "-"),
                         # Slider tospecify significance level
                         sliderInput("alpha", 
                                     "Significance Level:", 
