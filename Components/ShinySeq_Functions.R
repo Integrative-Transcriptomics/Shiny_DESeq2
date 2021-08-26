@@ -139,19 +139,20 @@ addDescriptionCol = function(dds_results, gff){
   }
   else{
     # get CDS entries of gff-file and remove (potentially) duplicated locus tags
-    gff = gff[gff$gbkey == "CDS",]
+    gff = gff[gff$gbkey != "Gene",]
     gff = gff[!duplicated(gff$locus_tag),]
     
-    dds_results$Description = gff[gff$locus_tag %in% row.names(dds_results),]$product
+    dds_results$Description = NA
+    dds_results[row.names(dds_results) %in% gff$locus_tag,]$Description = gff[gff$locus_tag %in% row.names(dds_results),]$product
     return(dds_results)
   }
 }
 
 # Add new column "foldchange" to table
 addFoldChangeCol = function(dds_results){
-  dds_results$foldChange = NA
-  dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$foldChange = 2^(dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
-  dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$foldChange = -2^abs(dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
+  dds_results$FoldChange = NA
+  dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$FoldChange = 2^(dds_results[dds_results$log2FoldChange >= 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
+  dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$FoldChange = -2^abs(dds_results[dds_results$log2FoldChange < 0 & !is.na(dds_results$log2FoldChange),]$log2FoldChange)
   
   return(dds_results)
 }

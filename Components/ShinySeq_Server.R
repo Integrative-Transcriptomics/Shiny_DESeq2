@@ -149,12 +149,12 @@ server = shinyServer(function(input, output, session){
         }
         req(dds)
         
-        # get results, add gene & description column
+        # get results, add gene-, description-, and foldchange-column
         ddsRes = as.data.frame(results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrast1, input$contrast2))) # significance level is chosen by user via slider
         ddsRes = addGeneNameCol(ddsRes)
         ddsRes = addDescriptionCol(ddsRes, gffdat)  # read-in of gff-data already happened at the very beginning
         ddsRes = addFoldChangeCol(ddsRes)
-        ddsRes = ddsRes[,c(7,1,2,9,3:6,8)]
+        ddsRes = ddsRes[,c(7,1,2,9,3:6,8)]  # sort
         output$resTable = renderTable(ddsRes, rownames = TRUE)
         
         significant_results = filterSignificantGenes(dds_results = ddsRes, alpha = input$alpha, logFCThreshold = 1)
