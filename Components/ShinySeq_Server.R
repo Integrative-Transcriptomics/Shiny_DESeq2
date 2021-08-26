@@ -194,23 +194,34 @@ server = shinyServer(function(input, output, session){
         # update PCA select inputs: 
         is_treatment = grepl("condition", colnames(colData(dds)), ignore.case = TRUE)
         updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
-        updateSelectInput(session, "pca2", choices = colnames(colData(dds))[is_treatment])
+        updateSelectInput(session, "pca2", choices = c(colnames(colData(dds))[is_treatment], "-"))
+        
         
         observeEvent(input$pcaPlot, {
+          
+          # set variables for PCA:
+          if(input$pca2 == "-"){
+            pcaGroups = input$pca1
+          }
+          else{
+            pcaGroups = c(input$pca1, input$pca2)
+          }
+          
           # plot PCA based on chosen normalization method
           if(input$normMethod == "Size Factor Division"){
-            pca = plotPCA(rlog(dds), intgroup = c(input$pca1, input$pca2)) 
+            pca = plotPCA(rlog(dds), intgroup = pcaGroups) 
           }
           else{
             # get data from plotPCA so it can be modified
-            pca = plotPCA(normObject, intgroup = c(input$pca1, input$pca2))
+            pca = plotPCA(normObject, intgroup = pcaGroups)
           }
           # plot
           output$pca = renderPlot({
-            ggplot(pca[["data"]], aes(x = PC1, y = PC2, color = pca[["data"]][[input$pca1]], shape = pca[["data"]][[input$pca2]])) +
-              geom_point(size = 2) +
-              theme(legend.title = element_blank()) + 
-              labs(x = pca[["labels"]][["x"]], y = pca[["labels"]]["y"])
+            # ggplot(pca[["data"]], aes(x = PC1, y = PC2, color = pca[["data"]][[input$pca1]], shape = pca[["data"]][[input$pca2]])) +
+            #   geom_point(size = 2) +
+            #   theme(legend.title = element_blank()) + 
+            #   labs(x = pca[["labels"]][["x"]], y = pca[["labels"]]["y"])
+            makePCA(pcaData = pca, pcaGroups = pcaGroups)
           }) # render pca plot close
           
           # pca interactive brush info
