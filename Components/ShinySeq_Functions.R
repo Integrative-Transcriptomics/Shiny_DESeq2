@@ -94,6 +94,7 @@ filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
   }
 }
 
+
 # Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
 significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
   comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
@@ -116,6 +117,7 @@ significantOverview = function(dds_results, contrastVariable1, contrastVariable2
   return(overview)
 }
 
+
 # Add new column "Gene name" to table (assumes that row.names is currently: 'locus tag, gene name'): 
 addGeneNameCol = function(dds_results){
   if(dds_results[1,1] == "no significant genes found!"){
@@ -131,6 +133,7 @@ addGeneNameCol = function(dds_results){
     return(dds_results)
   }
 }
+
 
 # Add new column "Description" to table (by parsing 'product' of a given gff-file)
 addDescriptionCol = function(dds_results, gff){
@@ -148,6 +151,7 @@ addDescriptionCol = function(dds_results, gff){
   }
 }
 
+
 # Add new column "foldchange" to table
 addFoldChangeCol = function(dds_results){
   dds_results$FoldChange = NA
@@ -156,7 +160,6 @@ addFoldChangeCol = function(dds_results){
   
   return(dds_results)
 }
-
 
 
 ## PLOT RELATED ##
@@ -206,6 +209,7 @@ erupt = function(dds_results, logFCthreshold, alpha){
   return(list(vp, res))
 }
 
+
 # Create PCA plot (w. ggplot2) based on a pca dataset and a vector of variables with either one (color) or two variables (color+shape)
 makePCA = function(pcaData, pcaGroups){
   # colors only, if there is only one group of interest:
@@ -224,5 +228,17 @@ makePCA = function(pcaData, pcaGroups){
   }
   return(pcaPlot)
 }
+
+
+# Create venn diagram from list of gene-vectors and overview table (for labels)
+makeVenn = function(geneList, overviewTable){
+  vennDiagram = ggVennDiagram(geneList, 
+                              category.names = overviewTable[,1], 
+                              label = "count") + 
+    theme(legend.position = "none") 
+  
+  return(vennDiagram)
+}
+
 
 

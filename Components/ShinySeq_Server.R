@@ -101,6 +101,9 @@ server = shinyServer(function(input, output, session){
       
       overview = data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))  # empty table, will get updated
       output$overviewTable = renderTable(overview, rownames = TRUE)
+      
+      geneList = list()  # for venn diagram and UpSet plot
+      
       observeEvent(input$addToOverview, {
         if(is.null(dds)){
           showNotification("Please run DESeq first", type = "error")
@@ -123,6 +126,12 @@ server = shinyServer(function(input, output, session){
           # Update & render table
           overview <<- rbind(overview, significant_overview)
           output$overviewTable = renderTable(overview, rownames = TRUE)
+          
+          # Update list & render venn Diagram and UpSet plot
+          geneList[[length(geneList)+1]] <<- row.names(significant_results)
+          if(length(geneList) >= 2){
+            output$vennDiagram = renderPlot({makeVenn(geneList, overview)})
+          }
         }
       }
       ) # add contrast to overview table close
@@ -137,8 +146,11 @@ server = shinyServer(function(input, output, session){
       
       # Clear button for overview table:
       observeEvent(input$clearOverview, {
+        # clear table:
         overview <<- data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))
         output$overviewTable = renderTable(overview, rownames = TRUE)
+        # clear list for venn and UpSet
+        geneList <<- list()
       })
       
       

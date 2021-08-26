@@ -133,7 +133,12 @@ ui = fluidPage(
                         actionButton("addToOverview", "Add to table!", width = '100%',class = "btn-warning"),
                         actionButton("clearOverview", "Clear table!", width = '100%',class = "btn-warning"),
                       ), # sidebarPanel close
-                      mainPanel(downloadButton("downloadOverview", "Download"), tableOutput("overviewTable"))
-             ) # tabPanel close
+                      mainPanel(
+                        tabsetPanel(type = "tabs",
+                                    tabPanel("Table", downloadButton("downloadOverview", "Download"), tableOutput("overviewTable")),
+                                    tabPanel("Venn Diagram", plotOutput("vennDiagram"))
+                          ) # tabsetPanel of mainPanel close
+                        ) # mainPanel close
+             ) # tabPanel "Overview" close
   ) # navBarPage close
 ) # ui close
