@@ -240,5 +240,13 @@ makeVenn = function(geneList, overviewTable){
   return(vennDiagram)
 }
 
+# Function to make people really upset
+# Upset plot based on genelist and overview table (for labels)
+makeUpset = function(geneList, overviewTable){
+  names(geneList) = overviewTable[,1] 
+  upsetPlot = upset(fromList(geneList), nsets = length(geneList))
+  return(upsetPlot)
+}
+
 
 

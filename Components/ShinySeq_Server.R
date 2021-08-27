@@ -99,10 +99,14 @@ server = shinyServer(function(input, output, session){
       ## UP-/DOWN-REGULATION ##
       #########################
       
+      # Default Setting:
       overview = data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))  # empty table, will get updated
       output$overviewTable = renderTable(overview, rownames = TRUE)
-      
+      output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
       geneList = list()  # for venn diagram and UpSet plot
+      output$vennDiagram = renderPlot({ggplot()})
+      output$upsetPlot = renderPlot({ggplot()})
+      
       
       observeEvent(input$addToOverview, {
         if(is.null(dds)){
@@ -115,7 +119,7 @@ server = shinyServer(function(input, output, session){
           showNotification("Experimental groups must differ!", type = "error")
         }
         else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview[,1]){
-          showNotification("Contrast was already added to overview Table!", type = "error")
+          showNotification("Contrast was already added to overview table!", type = "error")
         }
         else{
           # get results, filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
@@ -130,7 +134,15 @@ server = shinyServer(function(input, output, session){
           # Update list & render venn Diagram and UpSet plot
           geneList[[length(geneList)+1]] <<- row.names(significant_results)
           if(length(geneList) >= 2){
-            output$vennDiagram = renderPlot({makeVenn(geneList, overview)})
+            output$upsetPlot = renderPlot({makeUpset(geneList, overview)})
+            if(length(geneList) <= 7){
+              # ggVennDiagram only supports 2-7 dimensions -> ignore >7 dimensions
+              output$vennDiagram = renderPlot({makeVenn(geneList, overview)})
+            }
+          }
+          if(length(geneList) > 7){
+            # inform user when maximum 
+            showNotification("Warning: Venn diagram only supports 2-7 dimensions. Addition of further dimensions will be ignored.", type = "warning")
           }
         }
       }
@@ -151,6 +163,8 @@ server = shinyServer(function(input, output, session){
         output$overviewTable = renderTable(overview, rownames = TRUE)
         # clear list for venn and UpSet
         geneList <<- list()
+        output$vennDiagram = renderPlot({ggplot()})
+        output$upsetPlot = renderPlot({ggplot()})
       })
       
       

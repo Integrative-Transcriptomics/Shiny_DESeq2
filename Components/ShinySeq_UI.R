@@ -135,8 +135,9 @@ ui = fluidPage(
                       ), # sidebarPanel close
                       mainPanel(
                         tabsetPanel(type = "tabs",
-                                    tabPanel("Table", downloadButton("downloadOverview", "Download"), tableOutput("overviewTable")),
-                                    tabPanel("Venn Diagram", plotOutput("vennDiagram"))
+                                    tabPanel("Table", textOutput("overviewInfo"), downloadButton("downloadOverview", "Download"), tableOutput("overviewTable")),
+                                    tabPanel("Venn Diagram", plotOutput("vennDiagram")),
+                                    tabPanel("UpSet Plot", plotOutput("upsetPlot"))
                           ) # tabsetPanel of mainPanel close
                         ) # mainPanel close
              ) # tabPanel "Overview" close
