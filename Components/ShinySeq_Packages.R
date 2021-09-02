@@ -19,5 +19,6 @@ library(rtracklayer)
 library(shiny)
 library(shinythemes)
 library(tidyr)
+library(UpSetR)
 
 options(repos = BiocManager::repositories()) # required for publishing the tool  
