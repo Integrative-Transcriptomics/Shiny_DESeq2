@@ -84,7 +84,7 @@ normalizeTPM = function(rawCounts, gffFile){
   # normalize for read depth
   totalSampleReadsPerMillion = colSums(rpkTable)/1e6 
   tpmTable = sweep(rpkTable, MARGIN = 2, totalSampleReadsPerMillion, FUN = "/")
-  tpmTable = tpmTable + 1  # add pseudo-counts
+  #tpmTable = tpmTable + 1  # add pseudo-counts
   
   return(tpmTable)
 }
@@ -182,9 +182,9 @@ addFoldChangeCol = function(dds_results){
 }
 
 # Add new columsn for average TPM and log2 of average TPM 
-addTPMandLogTPM = function(dds_results, tpmTable){
+addTPM = function(dds_results, tpmTable){
   dds_results$avgTPM = rowMeans(tpmTable)
-  dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
+  #dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
   return(dds_results)
 }
 

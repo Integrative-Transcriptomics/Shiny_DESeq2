@@ -185,7 +185,7 @@ server = shinyServer(function(input, output, session){
         ddsRes = addFoldChangeCol(ddsRes)
         ddsRes = addTPMandLogTPM(ddsRes, tpmTable)
         # sort and render table: 
-        ddsRes = ddsRes[,c(7,1,2,9,3,10,11,4:6,8)]  # sort
+        ddsRes = ddsRes[,c(7,1,2,9,3,10,4:6,8)]  # sort
         output$resTable = renderTable(ddsRes, rownames = TRUE)
         
         significant_results = filterSignificantGenes(dds_results = ddsRes, alpha = input$alpha, logFCThreshold = 1)
