@@ -103,14 +103,20 @@ server = shinyServer(function(input, output, session){
       #########################
       
       # Default Setting:
-      overview = data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))  # empty table, will get updated
-      output$overviewTable = renderTable(overview, rownames = TRUE)
+      overview = reactiveValues(data = data.frame("Conditions/Comparison" = character(0), 
+                                                  "UP" = numeric(0),
+                                                  "DOWN" = numeric(0),
+                                                  "TOTAL" = numeric(0),
+                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
+                                                  )
+                                )  # empty table, will get updated
+      output$overviewTable = renderDataTable(overview$data, server = TRUE, escape = FALSE, selection = 'none')
       output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
       geneList = list()  # for venn diagram and UpSet plot
       output$vennDiagram = renderPlot({ggplot()})
       output$upsetPlot = renderPlot({ggplot()})
       
-      
+      # Adding things to overview table (as well as Venn & UpSet Plot)
       observeEvent(input$addToOverview, {
         if(is.null(dds)){
           showNotification("Please run DESeq first", type = "error")
@@ -121,7 +127,7 @@ server = shinyServer(function(input, output, session){
           # DESeq crashes if experimental groups are the same
           showNotification("Experimental groups must differ!", type = "error")
         }
-        else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview[,1]){
+        else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview$data[,1]){
           showNotification("Contrast was already added to overview table!", type = "error")
         }
         else{
@@ -131,16 +137,21 @@ server = shinyServer(function(input, output, session){
           significant_overview = significantOverview(significant_results, input$contrastUpDown_1, input$contrastUpDown_2)
           
           # Update & render table
-          overview <<- rbind(overview, significant_overview)
-          output$overviewTable = renderTable(overview, rownames = TRUE)
+          overview$data = rbind(overview$data[,-5], significant_overview)
+          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
+          
+          #overview$data <<- rbind(overview$data, significant_overview)
+          #overview$test = shinyInput(actionButton, nrow(overview), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
+          #overview = reactiveValues(data = overview)###
+          #output$overviewTable = renderDataTable(overview$data, rownames = TRUE)
           
           # Update list & render venn Diagram and UpSet plot
           geneList[[length(geneList)+1]] <<- row.names(significant_results)
           if(length(geneList) >= 2){
-            output$upsetPlot = renderPlot({makeUpset(geneList, overview)})
+            output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
             if(length(geneList) <= 7){
               # ggVennDiagram only supports 2-7 dimensions -> ignore >7 dimensions
-              output$vennDiagram = renderPlot({makeVenn(geneList, overview)})
+              output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
             }
           }
           if(length(geneList) > 7){
@@ -155,15 +166,21 @@ server = shinyServer(function(input, output, session){
       output$downloadOverview = downloadHandler(
         filename = "overview.tsv",
         content = function(file) {
-          write.table(overview, file, row.names = FALSE, sep = "\t")
+          write.table(overview$data[,-5], file, row.names = FALSE, sep = "\t")
         }
       )
       
-      # Clear button for overview table:
+      # Clear specific row:
+      observeEvent(input$select_button, {
+        rowIndex = as.numeric(strsplit(input$select_button, "_")[[1]][2])
+        overview$data = overview$data[-rowIndex,]
+      })
+      
+      # Clear button for entire overview table:
       observeEvent(input$clearOverview, {
         # clear table:
-        overview <<- data.frame("Conditions/Comparison" = character(0), "UP" = numeric(0), "DOWN" = numeric(0), "TOTAL" = numeric(0))
-        output$overviewTable = renderTable(overview, rownames = TRUE)
+        overview$data = overview$data[-(1:nrow(overview$data)),]
+
         # clear list for venn and UpSet
         geneList <<- list()
         output$vennDiagram = renderPlot({ggplot()})

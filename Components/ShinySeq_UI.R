@@ -1,6 +1,6 @@
 #### =========== SHINYSEQ USER INTERFACE ============ ####
 ui = fluidPage(
-  theme = shinytheme("slate"),
+  theme = shinytheme("cerulean"),
   navbarPage("DESeq2 Analysis",
              
              ### First tab for uploading and displaying count data, design data, specifying DESeq Parameters ###
@@ -141,11 +141,21 @@ ui = fluidPage(
                       ), # sidebarPanel close
                       mainPanel(
                         tabsetPanel(type = "tabs",
-                                    tabPanel("Table", textOutput("overviewInfo"), downloadButton("downloadOverview", "Download"), tableOutput("overviewTable")),
+                                    tabPanel("Table", textOutput("overviewInfo"), downloadButton("downloadOverview", "Download"), dataTableOutput("overviewTable")),
                                     tabPanel("Venn Diagram", plotOutput("vennDiagram")),
                                     tabPanel("UpSet Plot", plotOutput("upsetPlot"))
                           ) # tabsetPanel of mainPanel close
                         ) # mainPanel close
              ) # tabPanel "Overview" close
+             
+             ###################
+             ### RESTRUCTURE ###
+             ###################
+             
+             ### RESULTS-SECTION ###
+             #tabPanel()
+             
+             
+             
   ) # navBarPage close
 ) # ui close

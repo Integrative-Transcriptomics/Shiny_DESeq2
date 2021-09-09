@@ -10,6 +10,15 @@ make.unique.2 = function(x, sep='.'){
   ave(x, x, FUN=function(a){if(length(a) > 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
 
+# Function that enables addition of action buttons to each row of a table
+# https://stackoverflow.com/questions/45739303/r-shiny-handle-action-buttons-in-data-table
+shinyInput <- function(FUN, len, id, ...) {
+  inputs <- character(len)
+  for (i in seq_len(len)) {
+    inputs[i] <- as.character(FUN(paste0(id, i), ...))
+  }
+  inputs
+}
 
 ## RAW DATA MANIPULATION ##
 
@@ -260,7 +269,7 @@ makePCA = function(pcaData, pcaGroups){
 # Create venn diagram from list of gene-vectors and overview table (for labels)
 makeVenn = function(geneList, overviewTable){
   vennDiagram = ggVennDiagram(geneList, 
-                              category.names = overviewTable[,1], 
+                              #category.names = overviewTable[,1],  # CURRENTLY PROBLEMATIC WITH LONG NAMES
                               label = "count") + 
     theme(legend.position = "none") 
   
