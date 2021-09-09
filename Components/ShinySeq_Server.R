@@ -34,8 +34,8 @@ server = shinyServer(function(input, output, session){
     infodat = read.csv(infoFile$datapath, sep = '\t')
     
     ## INPUT GFF FILE ## 
-    gffFile = input$gffFile
-    gffdat = as.data.frame(readGFF(gffFile$datapath))
+    gffFilePath = input$gffFile
+    gffdat = as.data.frame(readGFF(gffFilePath$datapath))
     
     ## SORT DATA ## 
     dats = sortThatData(rawdat, infodat, gffdat)
@@ -78,6 +78,9 @@ server = shinyServer(function(input, output, session){
         normObject = varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
         normCounts = assay(normObject)
       }
+      # TPM-normalization (always performed)
+      tpmTable = normalizeTPM(rawCounts, gffdat)
+      output$tpmTable = renderTable(tpmTable, rownames = TRUE)
       
       # else if(input$normMethod == "Quantile Normalization"){
       #   # Quantile normalization is not included in DESeq2 => log-transform counts => remove -inf-values => normalize
@@ -175,12 +178,14 @@ server = shinyServer(function(input, output, session){
         }
         req(dds)
         
-        # get results, add gene-, description-, and foldchange-column
+        # get results, add gene-, description-, foldchange and average-TPM (log and absolute) -columns
         ddsRes = as.data.frame(results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrast1, input$contrast2))) # significance level is chosen by user via slider
         ddsRes = addGeneNameCol(ddsRes)
         ddsRes = addDescriptionCol(ddsRes, gffdat)  # read-in of gff-data already happened at the very beginning
         ddsRes = addFoldChangeCol(ddsRes)
-        ddsRes = ddsRes[,c(7,1,2,9,3:6,8)]  # sort
+        ddsRes = addTPMandLogTPM(ddsRes, tpmTable)
+        # sort and render table: 
+        ddsRes = ddsRes[,c(7,1,2,9,3,10,11,4:6,8)]  # sort
         output$resTable = renderTable(ddsRes, rownames = TRUE)
         
         significant_results = filterSignificantGenes(dds_results = ddsRes, alpha = input$alpha, logFCThreshold = 1)

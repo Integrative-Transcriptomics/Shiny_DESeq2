@@ -58,7 +58,13 @@ ui = fluidPage(
                                             tabPanel("Raw counts", downloadButton("downloadCounts", "Download"), tableOutput("countTable")),
                                             tabPanel("Design", tableOutput("designTable")),
                                             # Normalized data and results
-                                            tabPanel("Normalized Counts", tableOutput("normalizedTable")),
+                                            #tabPanel("Normalized Counts", tableOutput("normalizedTable")),
+                                            tabPanel("Normalized Counts",
+                                                     tabsetPanel(type = "tabs",
+                                                                 tabPanel("Specified method", tableOutput("normalizedTable")),
+                                                                 tabPanel("TPM-normalized", tableOutput("tpmTable"))
+                                                     )
+                                            ),
                                             tabPanel("Results",
                                                      tabsetPanel(type = "tabs",
                                                                  tabPanel("All", textOutput("resText_all"), downloadButton("downloadResults", "Download"), tableOutput("resTable")),

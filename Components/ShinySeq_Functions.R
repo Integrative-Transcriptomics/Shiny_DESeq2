@@ -3,7 +3,7 @@
 
 ## MISC ##
 
-# Alter version of make.unique
+# Altered version of make.unique
 make.unique.2 = function(x, sep='.'){
   # https://stackoverflow.com/questions/7659891/r-make-unique-starting-in-1
   # Makes unique names for duplicate entries in a vector. Default make.unique leaves the first duplicate unchanged. This function starts enumarting from duplicate 1. 
@@ -67,6 +67,26 @@ sortThatData = function(rawCounts, infoData, gffData){
   row.names(infoData) = merged_treatments
   
   return(list(rawCounts, infoData))     
+}
+
+
+# TPM normalization
+normalizeTPM = function(rawCounts, gffFile){
+  # remove locus tags that are not in rawCounts & calculate gene length
+  gffFile = gffFile[!duplicated(gffFile$locus_tag),c("locus_tag", "start", "end")]
+  gffFile = gffFile[gffFile$locus_tag %in% rawCounts$Geneid,] 
+  gffFile$length = gffFile$end - gffFile$start
+  
+  # normalize for gene length
+  rpkTable = rawCounts[,-1]
+  rpkTable = (rpkTable*1000)/gffFile$length
+  
+  # normalize for read depth
+  totalSampleReadsPerMillion = colSums(rpkTable)/1e6 
+  tpmTable = sweep(rpkTable, MARGIN = 2, totalSampleReadsPerMillion, FUN = "/")
+  tpmTable = tpmTable + 1  # add pseudo-counts
+  
+  return(tpmTable)
 }
 
 
@@ -161,6 +181,13 @@ addFoldChangeCol = function(dds_results){
   return(dds_results)
 }
 
+# Add new columsn for average TPM and log2 of average TPM 
+addTPMandLogTPM = function(dds_results, tpmTable){
+  dds_results$avgTPM = rowMeans(tpmTable)
+  dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
+  return(dds_results)
+}
+
 
 ## PLOT RELATED ##
 
@@ -247,6 +274,14 @@ makeUpset = function(geneList, overviewTable){
   upsetPlot = upset(fromList(geneList), nsets = length(geneList))
   return(upsetPlot)
 }
+
+
+
+
+
+
+
+
 
 
 
