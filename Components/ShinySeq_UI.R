@@ -131,7 +131,7 @@ ui = fluidPage(
                       )
              ), # tabPanel "Plots" close
              ### OVERVIEW TABLE OVER UP- AND DOWNREGULATED GENES ### 
-             tabPanel("Up-/Downregulation Overview",
+             tabPanel("Differential Expression",
                       sidebarPanel(
                         h4("Specify Contrast"),
                         selectInput("contrastUpDown_1", "First Experimental Group:", "-"),

@@ -107,7 +107,7 @@ server = shinyServer(function(input, output, session){
                                                   "UP" = numeric(0),
                                                   "DOWN" = numeric(0),
                                                   "TOTAL" = numeric(0),
-                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
+                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
                                                   )
                                 )  # empty table, will get updated
       output$overviewTable = renderDataTable(overview$data, escape = FALSE)
@@ -138,12 +138,7 @@ server = shinyServer(function(input, output, session){
           
           # Update & render table
           overview$data = rbind(overview$data[,-5], significant_overview)
-          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
-          
-          #overview$data <<- rbind(overview$data, significant_overview)
-          #overview$test = shinyInput(actionButton, nrow(overview), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
-          #overview = reactiveValues(data = overview)###
-          #output$overviewTable = renderDataTable(overview$data, rownames = TRUE)
+          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
           
           # Update list & render venn Diagram and UpSet plot
           geneList[[length(geneList)+1]] <<- row.names(significant_results)
@@ -157,8 +152,8 @@ server = shinyServer(function(input, output, session){
           if(length(geneList) > 7){
             # inform user when maximum 
             showNotification("Warning: Venn diagram only supports 2-7 dimensions. Addition of further dimensions will be ignored.", type = "warning")
+            }
           }
-        }
       }
       ) # add contrast to overview table close
       
@@ -171,16 +166,38 @@ server = shinyServer(function(input, output, session){
       )
       
       # Clear specific row:
-      observeEvent(input$select_button, {
-        rowIndex = as.numeric(strsplit(input$select_button, "_")[[1]][2])
-        overview$data = overview$data[-rowIndex,]
+      observeEvent(input$delete_button, {
+        print(paste("pressed button", input$delete_button))
+        overview$data <<- overview$data[,-5]
+        # Update overview table
+        rowIndex = as.numeric(strsplit(input$delete_button, "_")[[1]][2])
+        overview$data <<- overview$data[-rowIndex,]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
+        overview$data$Actions <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+        # Update venn diagram & Upset: 
+        geneList[[rowIndex]] <<- NULL
+        if(length(geneList) >= 2){
+          output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
+          if(length(geneList) <= 7){
+            # ggVennDiagram only supports 2-7 dimensions -> ignore >7 dimensions
+            output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
+          }
+        }
+        else{
+          output$vennDiagram = renderPlot({ggplot()})
+          output$upsetPlot = renderPlot({ggplot()})
+        }
       })
       
       # Clear button for entire overview table:
       observeEvent(input$clearOverview, {
         # clear table:
-        overview$data = overview$data[-(1:nrow(overview$data)),]
-
+        #overview$data = overview$data[-(1:nrow(overview$data)),]
+        overview$data = data.frame("Conditions/Comparison" = character(0), 
+                                   "UP" = numeric(0),
+                                   "DOWN" = numeric(0),
+                                   "TOTAL" = numeric(0),
+                                   "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+                        )
         # clear list for venn and UpSet
         geneList <<- list()
         output$vennDiagram = renderPlot({ggplot()})
