@@ -88,26 +88,87 @@ server = shinyServer(function(input, output, session){
       #   normCounts = normalize.quantiles(as.matrix(logCount), copy = TRUE)
       # }
       
-      output$normalizedTable = renderTable(normCounts, rownames = TRUE) 
+      output$normalizedTable = renderTable(normCounts, rownames = TRUE)
       
-      ## Update results select inputs
-      variables = levels(factor(infoData[, c(input$variable)]))
-      updateSelectInput(session, "contrast1", choices = variables)
-      updateSelectInput(session, "contrast2", choices = variables)
+      # Log-transform (if required). Will be used for heatmaps
+      log2normCounts = normCounts
+      # if data was normalized by size factor division => data is not yet log transformed!
+      if(input$normMethod == "Size Factor Division"){
+        log2normCounts = logTransform(normCounts)
+      }
       
-      updateSelectInput(session, "contrastUpDown_1", choices = variables)
-      updateSelectInput(session, "contrastUpDown_2", choices = variables)
+      #############
+      #### PCA ####
+      #############
+      
+      # update PCA select inputs: 
+      is_treatment = grepl("condition", colnames(colData(dds)), ignore.case = TRUE)
+      updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
+      updateSelectInput(session, "pca2", choices = c(colnames(colData(dds))[is_treatment], "-"))
+      
+      
+      observeEvent(input$pcaPlot, {
+        
+        # set variables for PCA:
+        if(input$pca2 == "-"){
+          pcaGroups = input$pca1
+        }
+        else{
+          pcaGroups = c(input$pca1, input$pca2)
+        }
+        
+        # plot PCA based on chosen normalization method
+        if(input$normMethod == "Size Factor Division"){
+          # get data from plotPCA so it can be modified
+          pca = plotPCA(rlog(dds), intgroup = pcaGroups) 
+        }
+        else{
+          # get data from plotPCA so it can be modified
+          pca = plotPCA(normObject, intgroup = pcaGroups)
+        }
+        # plot
+        output$pca = renderPlot({
+          makePCA(pcaData = pca, pcaGroups = pcaGroups)
+        }) # render pca plot close
+        
+        # pca interactive brush info
+        output$pca_info = renderPrint({
+          brushedPoints(pca[["data"]], input$pca_brush)
+        })
+      }) # PCA button close
+      
+      ##################
+      #### BOXPLOTS ####
+      ##################
+      
+      output$boxplot = renderPlot(boxplot(log2normCounts))
+      
+      ################################
+      #### HEATMAP OF EXPERIMENTS ####
+      ################################
+      
+      # render plot
+      samp_dist = dist(t(log2normCounts))
+      #color_gradient = colorRampPalette(c("white", "yellow", "orange" ,"red"))(1000)
+      color_gradient = colorRampPalette(c("white", "yellow","orange", "red", "darkred"))(1000)
+      plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient)
+      output$heatExp = renderPlot({plot_experiments})
       
       #########################
       ## UP-/DOWN-REGULATION ##
       #########################
+      
+      # Update select inputs for differential expression
+      variables = levels(factor(infoData[, c(input$variable)]))
+      updateSelectInput(session, "contrastUpDown_1", choices = variables)
+      updateSelectInput(session, "contrastUpDown_2", choices = variables)
       
       # Default Setting:
       overview = reactiveValues(data = data.frame("Conditions/Comparison" = character(0), 
                                                   "UP" = numeric(0),
                                                   "DOWN" = numeric(0),
                                                   "TOTAL" = numeric(0),
-                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
+                                                  "Delete" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
                                                   )
                                 )  # empty table, will get updated
       output$overviewTable = renderDataTable(overview$data, escape = FALSE)
@@ -138,7 +199,7 @@ server = shinyServer(function(input, output, session){
           
           # Update & render table
           overview$data = rbind(overview$data[,-5], significant_overview)
-          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
+          overview$data$Delete = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
           
           # Update list & render venn Diagram and UpSet plot
           geneList[[length(geneList)+1]] <<- row.names(significant_results)
@@ -167,12 +228,10 @@ server = shinyServer(function(input, output, session){
       
       # Clear specific row:
       observeEvent(input$delete_button, {
-        print(paste("pressed button", input$delete_button))
-        #overview$data <<- overview$data[,-5]
         # Update overview table
         rowIndex = as.numeric(strsplit(input$delete_button, "_")[[1]][2])
         overview$data <<- overview$data[-rowIndex, -5]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
-        overview$data$Actions <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
+        overview$data$Delete <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
         # Update venn diagram & Upset: 
         geneList[[rowIndex]] <<- NULL
         if(length(geneList) >= 2){
@@ -196,7 +255,7 @@ server = shinyServer(function(input, output, session){
                                    "UP" = numeric(0),
                                    "DOWN" = numeric(0),
                                    "TOTAL" = numeric(0),
-                                   "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
+                                   "Delete" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
                         )
         # clear list for venn and UpSet
         geneList <<- list()
@@ -205,7 +264,14 @@ server = shinyServer(function(input, output, session){
       })
       
       
+      #####################
       ## DISPLAY RESULTS ##
+      #####################
+      
+      ## Update results select inputs
+      updateSelectInput(session, "contrast1", choices = variables)  # 'variables' have already been set when updating select inputs for differential expression
+      updateSelectInput(session, "contrast2", choices = variables)
+      
       observeEvent(input$results, {
         if(is.null(dds)){
           showNotification("Please run DESeq first", type = "error")
@@ -251,50 +317,9 @@ server = shinyServer(function(input, output, session){
         )
         
         
-        ##################
-        ##### PLOTS ######
-        ##################
-        
-        #### PCA ####
-        # update PCA select inputs: 
-        is_treatment = grepl("condition", colnames(colData(dds)), ignore.case = TRUE)
-        updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
-        updateSelectInput(session, "pca2", choices = c(colnames(colData(dds))[is_treatment], "-"))
-        
-        
-        observeEvent(input$pcaPlot, {
-          
-          # set variables for PCA:
-          if(input$pca2 == "-"){
-            pcaGroups = input$pca1
-          }
-          else{
-            pcaGroups = c(input$pca1, input$pca2)
-          }
-          
-          # plot PCA based on chosen normalization method
-          if(input$normMethod == "Size Factor Division"){
-            pca = plotPCA(rlog(dds), intgroup = pcaGroups) 
-          }
-          else{
-            # get data from plotPCA so it can be modified
-            pca = plotPCA(normObject, intgroup = pcaGroups)
-          }
-          # plot
-          output$pca = renderPlot({
-            # ggplot(pca[["data"]], aes(x = PC1, y = PC2, color = pca[["data"]][[input$pca1]], shape = pca[["data"]][[input$pca2]])) +
-            #   geom_point(size = 2) +
-            #   theme(legend.title = element_blank()) + 
-            #   labs(x = pca[["labels"]][["x"]], y = pca[["labels"]]["y"])
-            makePCA(pcaData = pca, pcaGroups = pcaGroups)
-          }) # render pca plot close
-          
-          # pca interactive brush info
-          output$pca_info = renderPrint({
-            brushedPoints(pca[["data"]], input$pca_brush)
-          })
-        }) # PCA button close
-        
+        #################################
+        ##### PLOTS FOR COMARISONS ######
+        #################################
         
         #### VOLCANO PLOT ####
         observeEvent(input$volcPlot, {
@@ -311,20 +336,6 @@ server = shinyServer(function(input, output, session){
             brushedPoints(volc_plot_and_data[[2]], input$volc_brush)
           })
         }) # volcano plot button close
-        
-        
-        #### HEATMAP OF EXPERIMENTS ####
-        log2normCounts = normCounts
-        # if data was normalized by size factor division => data is not yet log transformed!
-        if(input$normMethod == "Size Factor Division"){
-          log2normCounts = logTransform(normCounts)
-        }
-        # render plot
-        samp_dist = dist(t(log2normCounts))
-        #color_gradient = colorRampPalette(c("white", "yellow", "orange" ,"red"))(1000)
-        color_gradient = colorRampPalette(c("white", "yellow","orange", "red", "darkred"))(1000)
-        plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient)
-        output$heatExp = renderPlot({plot_experiments})
         
         #### HEATMAP OF TOP GENES (BASED ON VARIANCE) ####
         observeEvent(input$plotGeneHeat, {
@@ -343,8 +354,7 @@ server = shinyServer(function(input, output, session){
           
         }) # gene Heatmap button close
         
-        #### BOXPLOTS ####
-        output$boxplot = renderPlot(boxplot(log2normCounts))
+        
       }) # results button close
     }) # analyze button close
   }) # upload button close
