@@ -191,7 +191,7 @@ addFoldChangeCol = function(dds_results){
 }
 
 # Add new columsn for average TPM and log2 of average TPM 
-addTPM = function(dds_results, tpmTable){
+addAverageTPM = function(dds_results, tpmTable){
   dds_results$avgTPM = rowMeans(tpmTable)
   #dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
   return(dds_results)

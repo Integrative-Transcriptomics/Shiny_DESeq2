@@ -110,7 +110,7 @@ server = shinyServer(function(input, output, session){
                                                   "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"select_button\",  this.id)')
                                                   )
                                 )  # empty table, will get updated
-      output$overviewTable = renderDataTable(overview$data, server = TRUE, escape = FALSE, selection = 'none')
+      output$overviewTable = renderDataTable(overview$data, escape = FALSE)
       output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
       geneList = list()  # for venn diagram and UpSet plot
       output$vennDiagram = renderPlot({ggplot()})
@@ -200,7 +200,7 @@ server = shinyServer(function(input, output, session){
         ddsRes = addGeneNameCol(ddsRes)
         ddsRes = addDescriptionCol(ddsRes, gffdat)  # read-in of gff-data already happened at the very beginning
         ddsRes = addFoldChangeCol(ddsRes)
-        ddsRes = addTPMandLogTPM(ddsRes, tpmTable)
+        ddsRes = addAverageTPM(ddsRes, tpmTable)
         # sort and render table: 
         ddsRes = ddsRes[,c(7,1,2,9,3,10,4:6,8)]  # sort
         output$resTable = renderTable(ddsRes, rownames = TRUE)
