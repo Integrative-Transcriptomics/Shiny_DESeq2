@@ -107,7 +107,7 @@ server = shinyServer(function(input, output, session){
                                                   "UP" = numeric(0),
                                                   "DOWN" = numeric(0),
                                                   "TOTAL" = numeric(0),
-                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+                                                  "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
                                                   )
                                 )  # empty table, will get updated
       output$overviewTable = renderDataTable(overview$data, escape = FALSE)
@@ -138,7 +138,7 @@ server = shinyServer(function(input, output, session){
           
           # Update & render table
           overview$data = rbind(overview$data[,-5], significant_overview)
-          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+          overview$data$Actions = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
           
           # Update list & render venn Diagram and UpSet plot
           geneList[[length(geneList)+1]] <<- row.names(significant_results)
@@ -168,11 +168,11 @@ server = shinyServer(function(input, output, session){
       # Clear specific row:
       observeEvent(input$delete_button, {
         print(paste("pressed button", input$delete_button))
-        overview$data <<- overview$data[,-5]
+        #overview$data <<- overview$data[,-5]
         # Update overview table
         rowIndex = as.numeric(strsplit(input$delete_button, "_")[[1]][2])
-        overview$data <<- overview$data[-rowIndex,]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
-        overview$data$Actions <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+        overview$data <<- overview$data[-rowIndex, -5]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
+        overview$data$Actions <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
         # Update venn diagram & Upset: 
         geneList[[rowIndex]] <<- NULL
         if(length(geneList) >= 2){
@@ -196,7 +196,7 @@ server = shinyServer(function(input, output, session){
                                    "UP" = numeric(0),
                                    "DOWN" = numeric(0),
                                    "TOTAL" = numeric(0),
-                                   "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.onInputChange(\"delete_button\",  this.id)')
+                                   "Actions" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
                         )
         # clear list for venn and UpSet
         geneList <<- list()
