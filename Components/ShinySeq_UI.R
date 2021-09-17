@@ -1,5 +1,6 @@
 #### =========== SHINYSEQ USER INTERFACE ============ ####
 ui = fluidPage(
+  tags$head(tags$style(HTML('.modal-lg {width: 100%;}'))),
   theme = shinytheme("cerulean"),
   navbarPage("DESeq2 Analysis",
              
@@ -32,50 +33,41 @@ ui = fluidPage(
                                      "Normalization Method:",
                                      c("Size Factor Division", "VST")),
                         #c("Size Factor Division", "VST", "Quantile Normalization")),
-                        
-                        # Button to start DESeq
-                        actionButton("analyze", "Run DESeq!", width = '100%',class = "btn-warning"),
-                        
-                        ## Contrast comparison of experimental variables ## 
-                        div(style = "margin-top: +45px"),
-                        h4("Experimental Comparison"),
-                        selectInput("contrast1", 'First variable ("baseline"):', "-"),
-                        selectInput("contrast2", 'Second variable:', "-"),
-                        # Slider tospecify significance level
+                        # Slider to specify significance level
                         sliderInput("alpha", 
                                     "Significance Level:", 
                                     min = 0.01, 
                                     max = 1, 
                                     step = 0.01, 
                                     value = 0.05),
-                        actionButton("results", "Get Results!", width = '100%',class = "btn-warning"),
-                        
+                        # Button to start DESeq
+                        actionButton("analyze", "Run DESeq!", width = '100%',class = "btn-warning"),
                       ), # side bar close
                       
                       ## Main panel displaying data, results, plots ##
                       mainPanel(tabsetPanel(type = "tabs",
                                             # Raw data and info table
                                             tabPanel("Raw counts", downloadButton("downloadCounts", "Download"), tableOutput("countTable")),
-                                            tabPanel("Design", tableOutput("designTable")),
-                                            # Normalized data and results
-                                            #tabPanel("Normalized Counts", tableOutput("normalizedTable")),
-                                            tabPanel("Normalized Counts",
-                                                     tabsetPanel(type = "tabs",
-                                                                 tabPanel("Specified method", tableOutput("normalizedTable")),
-                                                                 tabPanel("TPM-normalized", tableOutput("tpmTable"))
-                                                     )
-                                            ),
-                                            tabPanel("Results",
-                                                     tabsetPanel(type = "tabs",
-                                                                 tabPanel("All", textOutput("resText_all"), downloadButton("downloadResults", "Download"), tableOutput("resTable")),
-                                                                 tabPanel("Significant", textOutput("resText_sig"), downloadButton("downloadSignificant", "Download"), tableOutput("significantTable"))
-                                                        )
-                                                     )
+                                            tabPanel("Design", tableOutput("designTable"))
+                                            # # Normalized data
+                                            # tabPanel("Normalized Counts",
+                                            #          tabsetPanel(type = "tabs",
+                                            #                      tabPanel("Specified method", tableOutput("normalizedTable")),
+                                            #                      tabPanel("TPM-normalized", tableOutput("tpmTable"))
+                                            #          )
+                                            # )
                       )
                       ) # main panel close
              ), # tabPanel "Data Upload & Analysis Parameters" close
-             tabPanel("Plots",
+             tabPanel("Normalization",
                       tabsetPanel(type = "tabs",
+                                  # Normalized data
+                                  tabPanel("Normalized Counts",
+                                           tabsetPanel(type = "tabs",
+                                                       tabPanel("Specified method", tableOutput("normalizedTable")),
+                                                       tabPanel("TPM-normalized", tableOutput("tpmTable"))
+                                           )
+                                  ),
                                   # BOXPLOTS 
                                   tabPanel("Boxplots", plotOutput("boxplot")),
                                   # PCA
@@ -91,7 +83,24 @@ ui = fluidPage(
                                   # HEATMAPS
                                   tabPanel("Heatmaps", 
                                            tabsetPanel(type = "tabs",
-                                                       tabPanel("Experiments", plotOutput("heatExp")), # distance heatmap of experiment data
+                                                       tabPanel("Experiments", 
+                                                                sidebarPanel(h4("Size:"),
+                                                                             sliderInput("experimentHeatHeight", 
+                                                                                         "Height (px)",
+                                                                                         min = 500,
+                                                                                         max = 1500,
+                                                                                         step = 10,
+                                                                                         value = 750),
+                                                                             sliderInput("experimentHeatWidth", 
+                                                                                         "Width (px)",
+                                                                                         min = 500,
+                                                                                         max = 1500,
+                                                                                         step = 10,
+                                                                                         value = 750),
+                                                                             actionButton("plotExperimentHeat", "Refresh Plot!", width = '100%', class = "btn-warning")
+                                                                             ),
+                                                                mainPanel(plotOutput("heatExp"))
+                                                                ), 
                                                        tabPanel("Genes (Variance)",                    # tabPanel for heatmap of high variance genes
                                                                 sidebarPanel(
                                                                   h4("Select amount of Genes:"),
@@ -109,25 +118,11 @@ ui = fluidPage(
                                                                               step = 10,
                                                                               value = 500),
                                                                   actionButton("plotGeneHeat", "Refresh Plot!", width = '100%', class = "btn-warning")
-                                                                ),
+                                                                  ),
                                                                 mainPanel(plotOutput("heatGene"))
-                                                       ) # tabPanel "Genes" close
+                                                                ) # tabPanel "Genes" close
                                            ) # tabsetPanel close
-                                  ), # tabPanel "Heatmaps" close
-                                  
-                                  # VOLCANO PLOT
-                                  tabPanel("Volcano", 
-                                           sidebarPanel(
-                                             h4("Select LogFC Threshold:"),
-                                             sliderInput("volcFcThr",       # slider to select threshold for the logFC of the volcanoplot
-                                                         "Threshold (absolute)",
-                                                         min = 0,
-                                                         max = 3,
-                                                         step = 0.1,
-                                                         value = 1),
-                                             actionButton("volcPlot", "Refresh Plot!", width = '100%', class = "btn-warning")
-                                           ),
-                                           mainPanel(plotOutput("volc", brush = "volc_brush"), verbatimTextOutput("volc_info")))
+                                  ) # tabPanel "Heatmaps" close
                       )
              ), # tabPanel "Plots" close
              ### OVERVIEW TABLE OVER UP- AND DOWNREGULATED GENES ### 
@@ -141,21 +136,40 @@ ui = fluidPage(
                       ), # sidebarPanel close
                       mainPanel(
                         tabsetPanel(type = "tabs",
-                                    tabPanel("Table", textOutput("overviewInfo"), downloadButton("downloadOverview", "Download"), dataTableOutput("overviewTable")),
+                                    tabPanel("Table", textOutput("overviewInfo"), downloadButton("downloadOverview", "Download"), dataTableOutput("overviewTable"), 
+                                             bsModal("diffExpressionResults", "Differential Expression Results", "will_be_triggered_manually", size = "large",
+                                                     tabsetPanel(type = "tabs",
+                                                                 tabPanel("Gene Expression", tabsetPanel(type = "tabs",
+                                                                                                 tabPanel("All Genes", downloadButton("downloadAllResults", "Download"), dataTableOutput("diffResults")),
+                                                                                                 tabPanel("Significant Genes", downloadButton("downloadSignResults", "Download"), dataTableOutput("signDiffResults"))
+                                                                                                )
+                                                                          ),
+                                                                 tabPanel("Plots", tabsetPanel(type = "tabs",
+                                                                                               #tabPanel("Heatmap", plotOutput("tbc")),
+                                                                                               tabPanel("Volcano Plot",
+                                                                                                        sidebarPanel(
+                                                                                                          h4("Select LogFC Threshold:"),
+                                                                                                          sliderInput("volcanoFcThreshold",
+                                                                                                                      "Threshold (absolute)",
+                                                                                                                      min = 0,
+                                                                                                                      max = 3,
+                                                                                                                      step = 0.1,
+                                                                                                                      value = 1
+                                                                                                                      ),
+                                                                                                          actionButton("volcPlotButton", "Refresh Plot!", width = '100%', class = "btn-warning")
+                                                                                                        ),
+                                                                                                        mainPanel(plotOutput("volcanoPlot", brush = "volcanoBrush"), verbatimTextOutput("volcanoInfo"))
+                                                                                                        )
+                                                                                               )
+                                                                          )
+                                                                 ) # Modal tabsetPanel close
+                                                     ) # Modal close
+                                             ),
                                     tabPanel("Venn Diagram", plotOutput("vennDiagram")),
                                     tabPanel("UpSet Plot", plotOutput("upsetPlot"))
+                                    
                           ) # tabsetPanel of mainPanel close
                         ) # mainPanel close
              ) # tabPanel "Overview" close
-             
-             ###################
-             ### RESTRUCTURE ###
-             ###################
-             
-             ### RESULTS-SECTION ###
-             #tabPanel()
-             
-             
-             
   ) # navBarPage close
 ) # ui close
