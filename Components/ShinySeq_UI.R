@@ -131,6 +131,7 @@ ui = fluidPage(
                         h4("Specify Contrast"),
                         selectInput("contrastUpDown_1", "First Experimental Group:", "-"),
                         selectInput("contrastUpDown_2", "Second Experimental Group:", "-"),
+                        textOutput("foldChangeInfo"),
                         actionButton("addToOverview", "Add to table!", width = '100%',class = "btn-warning"),
                         actionButton("clearOverview", "Clear table!", width = '100%',class = "btn-warning"),
                       ), # sidebarPanel close

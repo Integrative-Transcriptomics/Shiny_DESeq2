@@ -202,6 +202,7 @@ server = shinyServer(function(input, output, session){
         )
         )  # empty table, will get updated
         output$overviewTable = renderDataTable(overview$data, escape = FALSE)
+        output$foldChangeInfo = renderText("The foldchange is always calculated as first group/second group or log(first group) - log(second group), respectively")
         output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
         output$vennDiagram = renderPlot({ggplot()})
         output$upsetPlot = renderPlot({ggplot()})
