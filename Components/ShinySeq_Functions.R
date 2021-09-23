@@ -10,10 +10,8 @@ make.unique.2 = function(x, sep='.'){
   ave(x, x, FUN=function(a){if(length(a) > 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
 
-# Another ltered version of make.unique
+# Another altered version of make.unique. This version also adds an ID-number when 'x' only contains a single object
 make.unique.3 = function(x, sep='.'){
-  # https://stackoverflow.com/questions/7659891/r-make-unique-starting-in-1
-  # Makes unique names for duplicate entries in a vector. Default make.unique leaves the first duplicate unchanged. This function starts enumarting from duplicate 1. 
   ave(x, x, FUN=function(a){if(length(a) >= 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
 

@@ -158,7 +158,7 @@ server = shinyServer(function(input, output, session){
           samp_dist = dist(t(log2normCounts))
           #color_gradient = colorRampPalette(c("white", "yellow", "orange" ,"red"))(1000)
           color_gradient = colorRampPalette(c("white", "yellow","orange", "red", "darkred"))(1000)
-          plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient)
+          plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient, silent = TRUE)
           output$heatExp = renderPlot({plot_experiments}, height = input$experimentHeatHeight, width = input$experimentHeatWidth)
         })
         
@@ -175,7 +175,7 @@ server = shinyServer(function(input, output, session){
           colAnno = data.frame(colData(dds)[, c(input$variable)])                                # annotation is based on the experimental variables the user chose before pressing the analyze button!
           row.names(colAnno) = row.names(colData(dds))                                           # if only one variable is selected, R omits the rownames meaning they need to be re-specified!
           colnames(colAnno) = input$variable                                                     # format column name
-          plotGenes = pheatmap(topVarGenes, annotation_col = colAnno)
+          plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE)
           # plot heatmap:
           output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight)
         }) # gene Heatmap button close
