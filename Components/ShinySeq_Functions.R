@@ -260,10 +260,14 @@ makePCA = function(pcaData, pcaGroups){
   }
   # colors + shapes, if there are two groups:
   else{
+    # by default, ggplot runs out of shapes for >6 groups. Parsing to factor helps:
+    pcaData[["data"]][[pcaGroups[2]]] = as.factor(pcaData[["data"]][[pcaGroups[2]]])
+    
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]], shape = pcaData[["data"]][[pcaGroups[2]]])) +
       geom_point(size = 2) +
       theme(legend.title = element_blank()) + 
-      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"])
+      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"]) +
+      scale_shape_manual(values = 1:nlevels(pcaData[["data"]][[pcaGroups[2]]]))
   }
   return(pcaPlot)
 }
