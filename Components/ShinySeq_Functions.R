@@ -248,6 +248,9 @@ erupt = function(dds_results, logFCthreshold, alpha){
 
 # Create PCA plot (w. ggplot2) based on a pca dataset and a vector of variables with either one (color) or two variables (color+shape)
 makePCA = function(pcaData, pcaGroups){
+  # if the first variable is numeric, ggplot makes a color scale, which is not desired:
+  pcaData[["data"]][[pcaGroups[1]]] = as.factor(pcaData[["data"]][[pcaGroups[1]]])
+  
   # colors only, if there is only one group of interest:
   if(length(pcaGroups) == 1){
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]])) +

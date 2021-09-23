@@ -109,12 +109,12 @@ server = shinyServer(function(input, output, session){
         # update PCA select inputs: 
         is_treatment = grepl("condition", colnames(colData(dds)), ignore.case = TRUE)
         updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
-        updateSelectInput(session, "pca2", choices = c(colnames(colData(dds))[is_treatment], "-"))
+        updateSelectInput(session, "pca2", choices = c("None", colnames(colData(dds))[is_treatment]))
         
         observeEvent(input$pcaPlot, {
           
           # set variables for PCA:
-          if(input$pca2 == "-"){
+          if(input$pca2 == "None"){
             pcaGroups = input$pca1
           }
           else{
