@@ -10,6 +10,13 @@ make.unique.2 = function(x, sep='.'){
   ave(x, x, FUN=function(a){if(length(a) > 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
 
+# Another ltered version of make.unique
+make.unique.3 = function(x, sep='.'){
+  # https://stackoverflow.com/questions/7659891/r-make-unique-starting-in-1
+  # Makes unique names for duplicate entries in a vector. Default make.unique leaves the first duplicate unchanged. This function starts enumarting from duplicate 1. 
+  ave(x, x, FUN=function(a){if(length(a) >= 1){paste(a, 1:length(a), sep=sep)} else {a}})
+}
+
 # Function that enables addition of action buttons to each row of a table
 # https://stackoverflow.com/questions/45739303/r-shiny-handle-action-buttons-in-data-table
 shinyInput <- function(FUN, len, id, ...) {
@@ -276,7 +283,7 @@ makePCA = function(pcaData, pcaGroups){
 # Create venn diagram from list of gene-vectors and overview table (for labels)
 makeVenn = function(geneList, overviewTable){
   vennDiagram = ggVennDiagram(geneList, 
-                              #category.names = overviewTable[,1],  # CURRENTLY PROBLEMATIC WITH LONG NAMES
+                              #category.names = overviewTable$'Conditions/Comparison',  # CURRENTLY PROBLEMATIC WITH LONG NAMES
                               label = "count") + 
     theme(legend.position = "none") 
   
@@ -286,7 +293,7 @@ makeVenn = function(geneList, overviewTable){
 # Function to make people really upset
 # Upset plot based on genelist and overview table (for labels)
 makeUpset = function(geneList, overviewTable){
-  names(geneList) = overviewTable[,1] 
+  names(geneList) = overviewTable$'Conditions/Comparison' #overviewTable[,1] 
   upsetPlot = upset(fromList(geneList), nsets = length(geneList))
   return(upsetPlot)
 }

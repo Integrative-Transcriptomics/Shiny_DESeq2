@@ -193,7 +193,8 @@ server = shinyServer(function(input, output, session){
         # ===== Differential Expression: Initialization ===== #
         
         # Default Settings:
-        overview = reactiveValues(data = data.frame("Conditions/Comparison" = character(0), 
+        overview = reactiveValues(data = data.frame("Set" = character(0),
+                                                    "Conditions/Comparison" = character(0), 
                                                     "UP" = numeric(0),
                                                     "DOWN" = numeric(0),
                                                     "TOTAL" = numeric(0),
@@ -201,7 +202,7 @@ server = shinyServer(function(input, output, session){
                                                     "Delete" = shinyInput(actionButton, 0, 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
         )
         )  # empty table, will get updated
-        output$overviewTable = renderDataTable(overview$data, escape = FALSE)
+        output$overviewTable = renderDataTable(overview$data, rownames = FALSE, escape = FALSE)
         output$foldChangeInfo = renderText("The foldchange is always calculated as first group/second group or log(first group) - log(second group), respectively")
         output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
         output$vennDiagram = renderPlot({ggplot()})
@@ -245,7 +246,9 @@ server = shinyServer(function(input, output, session){
             significant_overview = significantOverview(significant_results, input$contrastUpDown_1, input$contrastUpDown_2)
             
             # Update & render table
-            overview$data = rbind(overview$data[,-c(5,6)], significant_overview)
+            overview$data = rbind(overview$data[,-c(1,6,7)], significant_overview)
+            overview$data$Set = make.unique.3(rep("Set", nrow(overview$data)), sep = "_")
+            overview$data = overview$data[,c(5,1:4)]
             overview$data$Genes = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Show Genes", onclick = 'Shiny.setInputValue(\"genes_button\",  this.id.concat(\"_\", Math.random()))')
             overview$data$Delete = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
             
@@ -253,14 +256,18 @@ server = shinyServer(function(input, output, session){
             geneList[[length(geneList)+1]] <<- row.names(significant_results)
             if(length(geneList) >= 2){
               output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
-              if(length(geneList) <= 7){
-                # ggVennDiagram only supports 2-7 dimensions -> ignore >7 dimensions
+              if(length(geneList) <= 4){
+                # Venn diagram with >4 dimensions is too confusing
                 output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
               }
+              else{
+                # if there are >4 entries, make sure the first 4 entries are contained in diagram
+                output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,])})
+              }
             }
-            if(length(geneList) > 7){
+            if(length(geneList) > 4){
               # inform user when maximum 
-              showNotification("Warning: Venn diagram only supports 2-7 dimensions. Addition of further dimensions will be ignored.", type = "warning")
+              showNotification("Warning: Venn diagram only supports 2-4 dimensions. Addition of further dimensions will be ignored.", type = "warning")
             }
           }
         }
@@ -325,7 +332,7 @@ server = shinyServer(function(input, output, session){
         output$downloadOverview = downloadHandler(
           filename = "overview.tsv",
           content = function(file) {
-            write.table(overview$data[,-c(5,6)], file, row.names = FALSE, sep = "\t")
+            write.table(overview$data[,-c(6,7)], file, row.names = FALSE, sep = "\t")
           }
         )
         
@@ -336,18 +343,24 @@ server = shinyServer(function(input, output, session){
         observeEvent(input$delete_button, {
           # Update overview table
           rowIndex = as.numeric(strsplit(input$delete_button, "_")[[1]][2])
-          overview$data <<- overview$data[-rowIndex, -c(5,6)]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
+          overview$data <<- overview$data[-rowIndex, -c(6,7)]  # also removes column with 'delete'-buttons so a new column with updated IDs of action buttons can be added
+          overview$data$Set = make.unique.3(rep("Set", nrow(overview$data)), sep = "_")
           overview$data$Genes = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Show Genes", onclick = 'Shiny.setInputValue(\"genes_button\",  this.id.concat(\"_\", Math.random()))')
           overview$data$Delete <<- shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
+          #row.names(overview$Data) <<- c(1:nrow(overview$Data))
           # Update lists, venn diagram & Upset: 
           geneList[[rowIndex]] <<- NULL
           resultsList[[rowIndex]] <<- NULL
           signResultsList[[rowIndex]] <<- NULL
           if(length(geneList) >= 2){
             output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
-            if(length(geneList) <= 7){
-              # ggVennDiagram only supports 2-7 dimensions -> ignore >7 dimensions
+            if(length(geneList) <= 4){
+              # Venn diagram with >4 dimensions is too confusing
               output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
+            }
+            else{
+              # if there are >4 entries, make sure the first 4 entries are contained in diagram
+              output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,])})
             }
           }
           else{
@@ -361,7 +374,8 @@ server = shinyServer(function(input, output, session){
         observeEvent(input$clearOverview, {
           # clear table:
           #overview$data = overview$data[-(1:nrow(overview$data)),]
-          overview$data = data.frame("Conditions/Comparison" = character(0), 
+          overview$data = data.frame("Set" = character(0),
+                                     "Conditions/Comparison" = character(0), 
                                      "UP" = numeric(0),
                                      "DOWN" = numeric(0),
                                      "TOTAL" = numeric(0),
