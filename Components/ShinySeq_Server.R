@@ -239,7 +239,6 @@ server = shinyServer(function(input, output, session){
             # sort columns, add to list: 
             resultsTable = resultsTable[,c(7,1,2,9,3,10,4:6,8)]  # sort
             resultsList[[length(resultsList)+1]] <<- resultsTable
-            
             #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
             significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
             signResultsList[[length(signResultsList)+1]] <<- significant_results
@@ -255,7 +254,11 @@ server = shinyServer(function(input, output, session){
             # Update list & render venn Diagram and UpSet plot
             geneList[[length(geneList)+1]] <<- row.names(significant_results)
             if(length(geneList) >= 2){
-              output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
+              if(table(overview$data$TOTAL == 0)[1] >= 2){
+                # UpsetR will crash if there are are less than two non-empty elements in list
+                output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
+              }
+              
               if(length(geneList) <= 4){
                 # Venn diagram with >4 dimensions is too confusing
                 output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})

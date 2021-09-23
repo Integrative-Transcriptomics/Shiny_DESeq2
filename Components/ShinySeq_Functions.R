@@ -120,20 +120,20 @@ filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
   dataset = na.omit(dds_results)
   significant_data = dataset[(abs(dataset$log2FoldChange) > logFCThreshold & dataset$padj < alpha), ]
   
-  if(length(significant_data)){
-    return(significant_data)
-  }
-  else{
-    return(data.frame("no significant genes found!"))
-  }
+  return(significant_data)
+  # if(length(significant_data)){
+  #   return(significant_data)
+  # }
+  # else{
+  #   return(data.frame("no significant genes found!"))
+  # }
 }
 
 
 # Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
 significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
   comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
-  
-  if(dds_results[1,1] == "no significant genes found!"){
+  if(dds_results@nrows == 0){
     up = 0
     down = 0
     total = 0
@@ -284,7 +284,6 @@ makeVenn = function(geneList, overviewTable){
                               #category.names = overviewTable$'Conditions/Comparison',  # CURRENTLY PROBLEMATIC WITH LONG NAMES
                               label = "count") + 
     theme(legend.position = "none") 
-  
   return(vennDiagram)
 }
 
