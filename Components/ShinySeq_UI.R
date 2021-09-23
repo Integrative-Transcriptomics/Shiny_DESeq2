@@ -47,15 +47,8 @@ ui = fluidPage(
                       ## Main panel displaying data, results, plots ##
                       mainPanel(tabsetPanel(type = "tabs",
                                             # Raw data and info table
-                                            tabPanel("Raw counts", downloadButton("downloadCounts", "Download"), tableOutput("countTable")),
-                                            tabPanel("Design", tableOutput("designTable"))
-                                            # # Normalized data
-                                            # tabPanel("Normalized Counts",
-                                            #          tabsetPanel(type = "tabs",
-                                            #                      tabPanel("Specified method", tableOutput("normalizedTable")),
-                                            #                      tabPanel("TPM-normalized", tableOutput("tpmTable"))
-                                            #          )
-                                            # )
+                                            tabPanel("Raw counts", downloadButton("downloadCounts", "Download"), dataTableOutput("countTable")),
+                                            tabPanel("Design", downloadButton("downloadDesign", "Download"), dataTableOutput("designTable"))
                       )
                       ) # main panel close
              ), # tabPanel "Data Upload & Analysis Parameters" close
@@ -64,8 +57,8 @@ ui = fluidPage(
                                   # Normalized data
                                   tabPanel("Normalized Counts",
                                            tabsetPanel(type = "tabs",
-                                                       tabPanel("Specified method", tableOutput("normalizedTable")),
-                                                       tabPanel("TPM-normalized", tableOutput("tpmTable"))
+                                                       tabPanel("Specified method", downloadButton("downloadNormalizedCounts", "Download"), dataTableOutput("normalizedTable")),
+                                                       tabPanel("TPM-normalized", downloadButton("downloadTPMCounts", "Download"), dataTableOutput("tpmTable"))
                                            )
                                   ),
                                   # BOXPLOTS 

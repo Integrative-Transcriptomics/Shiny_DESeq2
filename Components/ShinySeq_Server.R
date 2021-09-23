@@ -43,8 +43,8 @@ server = shinyServer(function(input, output, session){
     infoData = dats[[2]]
     
     ## DISPLAY DATA ##
-    output$countTable = renderTable(rawCounts, rownames = TRUE)
-    output$designTable = renderTable(infoData, rownames = TRUE)
+    output$countTable = renderDataTable(rawCounts, rownames = TRUE)
+    output$designTable = renderDataTable(infoData, rownames = TRUE)
     
     # download counts
     output$downloadCounts = downloadHandler(
@@ -53,6 +53,16 @@ server = shinyServer(function(input, output, session){
       },
       content = function(file) {
         write.csv(dats[[1]], file, row.names = TRUE)
+      }
+    )
+    
+    # download design
+    output$downloadDesign = downloadHandler(
+      filename = function() {
+        paste0("sorted_design.txt")
+      },
+      content = function(file) {
+        write.csv(dats[[2]], file, row.names = TRUE)
       }
     )
     
@@ -83,17 +93,37 @@ server = shinyServer(function(input, output, session){
           normObject = varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
           normCounts = assay(normObject)
         }
-        # TPM-normalization (always performed)
-        tpmTable = normalizeTPM(rawCounts, gffdat)
-        output$tpmTable = renderTable(tpmTable, rownames = TRUE)
-        
         # else if(input$normMethod == "Quantile Normalization"){
         #   # Quantile normalization is not included in DESeq2 => log-transform counts => remove -inf-values => normalize
         #   logCount = logTransform(dats[[1]][,-1])
         #   normCounts = normalize.quantiles(as.matrix(logCount), copy = TRUE)
         # }
+        output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
         
-        output$normalizedTable = renderTable(normCounts, rownames = TRUE)
+        # Download normalized counts
+        output$downloadNormalizedCounts = downloadHandler(
+          filename = function() {
+            paste0("normalized_counts.txt")
+          },
+          content = function(file) {
+            write.csv(normCounts, file, row.names = TRUE)
+          }
+        )
+        
+        # TPM-normalization (always performed)
+        tpmTable = normalizeTPM(rawCounts, gffdat)
+        output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
+        
+        # Download TPM counts
+        output$downloadTPMCounts = downloadHandler(
+          filename = function() {
+            paste0("TPM_counts.txt")
+          },
+          content = function(file) {
+            write.csv(tpmTable, file, row.names = TRUE)
+          }
+        )
+        
         
         # Log-transform (if required). Will be used for heatmaps
         log2normCounts = normCounts
@@ -311,7 +341,7 @@ server = shinyServer(function(input, output, session){
           # == Table downloads ==
           output$downloadAllResults = downloadHandler(
             filename = function() {
-              paste0(overview$data[rowIndex, 1],".csv")
+              paste0(overview$data[rowIndex, 2],".csv")
             },
             content = function(file) {
               write.csv(resultsList[[rowIndex]], file, row.names = TRUE)
@@ -319,7 +349,7 @@ server = shinyServer(function(input, output, session){
           )
           output$downloadSignResults = downloadHandler(
             filename = function() {
-              paste0(overview$data[rowIndex, 1],".csv")
+              paste0(overview$data[rowIndex, 2],".csv")
             },
             content = function(file) {
               write.csv(signResultsList[[rowIndex]], file, row.names = TRUE)
