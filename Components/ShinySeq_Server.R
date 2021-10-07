@@ -208,7 +208,7 @@ server = shinyServer(function(input, output, session){
           plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE)
           # plot heatmap:
           output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight)
-        }) # gene Heatmap button close
+        })
         
         
         #####################################
@@ -218,7 +218,10 @@ server = shinyServer(function(input, output, session){
         # Update select inputs for differential expression
         variables = levels(factor(infoData[, c(input$variable)]))
         updateSelectInput(session, "contrastUpDown_1", choices = variables)
-        updateSelectInput(session, "contrastUpDown_2", choices = variables)
+        observeEvent(input$contrastUpDown_1, {
+          updateSelectInput(session, "contrastUpDown_2", choices = variables[variables != input$contrastUpDown_1])
+        })
+        
         
         # ===== Differential Expression: Initialization ===== #
         
@@ -256,18 +259,14 @@ server = shinyServer(function(input, output, session){
             # DESeq crashes if experimental groups are the same
             showNotification("Experimental groups must differ!", type = "error")
           }
-          else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview$data[,1]){
+          else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview$data$'Conditions/Comparison'){
             showNotification("Contrast was already added to overview table!", type = "error")
           }
           else{
-            # get results, add gene names, product description, fold change, avgTPM
+            # get results, add gene names, product description, fold change, avgTPM and sort
             resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, input$contrastUpDown_2))
-            resultsTable = addGeneNameCol(resultsTable)
-            resultsTable = addDescriptionCol(resultsTable, gffdat)  # read-in of gff-data already happened at the very beginning
-            resultsTable = addFoldChangeCol(resultsTable)
-            resultsTable = addAverageTPM(resultsTable, tpmTable)
-            # sort columns, add to list: 
-            resultsTable = resultsTable[,c(7,1,2,9,3,10,4:6,8)]  # sort
+            resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
+            # add to list: 
             resultsList[[length(resultsList)+1]] <<- resultsTable
             #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
             significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)

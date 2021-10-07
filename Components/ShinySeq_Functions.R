@@ -202,6 +202,16 @@ addAverageTPM = function(dds_results, tpmTable){
   return(dds_results)
 }
 
+# Function to sum up all results-table-manipulation functions and resort table:
+extendAndSortResults = function(resultsData, gffFile, tpmData){
+  resultsData = addGeneNameCol(resultsData)
+  resultsData = addDescriptionCol(resultsData, gffFile)  
+  resultsData = addFoldChangeCol(resultsData)
+  resultsData = addAverageTPM(resultsData, tpmData)
+  resultsData = resultsData[,c(7,1,2,9,3,10,4:6,8)]
+  return(resultsData)
+}
+
 
 ## PLOT RELATED ##
 
