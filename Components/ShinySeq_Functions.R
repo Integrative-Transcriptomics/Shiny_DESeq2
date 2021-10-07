@@ -10,10 +10,12 @@ make.unique.2 = function(x, sep='.'){
   ave(x, x, FUN=function(a){if(length(a) > 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
 
+
 # Another altered version of make.unique. This version also adds an ID-number when 'x' only contains a single object
 make.unique.3 = function(x, sep='.'){
   ave(x, x, FUN=function(a){if(length(a) >= 1){paste(a, 1:length(a), sep=sep)} else {a}})
 }
+
 
 # Function that enables addition of action buttons to each row of a table
 # https://stackoverflow.com/questions/45739303/r-shiny-handle-action-buttons-in-data-table
@@ -24,6 +26,7 @@ shinyInput <- function(FUN, len, id, ...) {
   }
   inputs
 }
+
 
 ## RAW DATA MANIPULATION ##
 
@@ -115,43 +118,6 @@ logTransform = function(dataset){
 
 ## RESULTS TABLES MANIPULATION ##
 
-# Method to filter results data so it only contains significant genes (log FC >= 1 & p < alpha):
-filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
-  dataset = na.omit(dds_results)
-  significant_data = dataset[(abs(dataset$log2FoldChange) > logFCThreshold & dataset$padj < alpha), ]
-  
-  return(significant_data)
-  # if(length(significant_data)){
-  #   return(significant_data)
-  # }
-  # else{
-  #   return(data.frame("no significant genes found!"))
-  # }
-}
-
-
-# Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
-significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
-  comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
-  if(dds_results@nrows == 0){
-    up = 0
-    down = 0
-    total = 0
-  }
-  else{
-    dataset = as.data.frame(na.omit(dds_results))
-    # Get infos from data:
-    up =  nrow(dataset[(dataset$log2FoldChange > 0),])
-    down = nrow(dataset[(dataset$log2FoldChange < 0),])
-    total = nrow(dataset)
-  }
-  
-  overview = data.frame(comparisonString, up, down, total)
-  colnames(overview) = c("Conditions/Comparison", "UP", "DOWN", "TOTAL")
-  return(overview)
-}
-
-
 # Add new column "Gene name" to table (assumes that row.names is currently: 'locus tag, gene name'): 
 addGeneNameCol = function(dds_results){
   if(dds_results[1,1] == "no significant genes found!"){
@@ -195,12 +161,14 @@ addFoldChangeCol = function(dds_results){
   return(dds_results)
 }
 
+
 # Add new columsn for average TPM and log2 of average TPM 
 addAverageTPM = function(dds_results, tpmTable){
   dds_results$avgTPM = rowMeans(tpmTable)
   #dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
   return(dds_results)
 }
+
 
 # Function to sum up all results-table-manipulation functions and resort table:
 extendAndSortResults = function(resultsData, gffFile, tpmData){
@@ -210,6 +178,49 @@ extendAndSortResults = function(resultsData, gffFile, tpmData){
   resultsData = addAverageTPM(resultsData, tpmData)
   resultsData = resultsData[,c(7,1,2,9,3,10,4:6,8)]
   return(resultsData)
+}
+
+
+# Method to filter results data so it only contains significant genes (log FC >= 1 & p < alpha):
+filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
+  dataset = na.omit(dds_results)
+  significant_data = dataset[(abs(dataset$log2FoldChange) > logFCThreshold & dataset$padj < alpha), ]
+  
+  return(significant_data)
+}
+
+
+## OVERVIEW TABLE MANIPULATION ##
+
+# Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
+significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
+  comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
+  if(dds_results@nrows == 0){
+    up = 0
+    down = 0
+    total = 0
+  }
+  else{
+    dataset = as.data.frame(na.omit(dds_results))
+    # Get infos from data:
+    up =  nrow(dataset[(dataset$log2FoldChange > 0),])
+    down = nrow(dataset[(dataset$log2FoldChange < 0),])
+    total = nrow(dataset)
+  }
+  
+  overview = data.frame(comparisonString, up, down, total)
+  colnames(overview) = c("Conditions/Comparison", "UP", "DOWN", "TOTAL")
+  return(overview)
+}
+
+
+# Update overview reactive value - objects: Append significantOverview object and update gene- and delete-button:
+updateOverviewDataTable = function(overviewReactiveValues, significantOverviewEntry){
+  overviewReactiveValues$data = rbind(overviewReactiveValues$data[,-c(1,6,7)], significantOverviewEntry)
+  overviewReactiveValues$data$Set = make.unique.3(rep("Set", nrow(overviewReactiveValues$data)), sep = "_")
+  overviewReactiveValues$data = overviewReactiveValues$data[,c(5,1:4)]
+  overviewReactiveValues$data$Genes = shinyInput(actionButton, nrow(overviewReactiveValues$data), 'button_', label = "Show Genes", onclick = 'Shiny.setInputValue(\"genes_button\",  this.id.concat(\"_\", Math.random()))')
+  overviewReactiveValues$data$Delete = shinyInput(actionButton, nrow(overviewReactiveValues$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
 }
 
 
@@ -296,6 +307,7 @@ makeVenn = function(geneList, overviewTable){
     theme(legend.position = "none") 
   return(vennDiagram)
 }
+
 
 # Function to make people really upset
 # Upset plot based on genelist and overview table (for labels)

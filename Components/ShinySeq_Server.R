@@ -219,7 +219,7 @@ server = shinyServer(function(input, output, session){
         variables = levels(factor(infoData[, c(input$variable)]))
         updateSelectInput(session, "contrastUpDown_1", choices = variables)
         observeEvent(input$contrastUpDown_1, {
-          updateSelectInput(session, "contrastUpDown_2", choices = variables[variables != input$contrastUpDown_1])
+          updateSelectInput(session, "contrastUpDown_2", choices = c(variables[variables != input$contrastUpDown_1], "Add all"))
         })
         
         
@@ -259,29 +259,35 @@ server = shinyServer(function(input, output, session){
             # DESeq crashes if experimental groups are the same
             showNotification("Experimental groups must differ!", type = "error")
           }
-          else if(paste(input$contrastUpDown_1, "VS", input$contrastUpDown_2) %in% overview$data$'Conditions/Comparison'){
-            showNotification("Contrast was already added to overview table!", type = "error")
-          }
           else{
-            # get results, add gene names, product description, fold change, avgTPM and sort
-            resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, input$contrastUpDown_2))
-            resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
-            # add to list: 
-            resultsList[[length(resultsList)+1]] <<- resultsTable
-            #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
-            significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
-            signResultsList[[length(signResultsList)+1]] <<- significant_results
-            significant_overview = significantOverview(significant_results, input$contrastUpDown_1, input$contrastUpDown_2)
-            
-            # Update & render table
-            overview$data = rbind(overview$data[,-c(1,6,7)], significant_overview)
-            overview$data$Set = make.unique.3(rep("Set", nrow(overview$data)), sep = "_")
-            overview$data = overview$data[,c(5,1:4)]
-            overview$data$Genes = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Show Genes", onclick = 'Shiny.setInputValue(\"genes_button\",  this.id.concat(\"_\", Math.random()))')
-            overview$data$Delete = shinyInput(actionButton, nrow(overview$data), 'button_', label = "Delete", onclick = 'Shiny.setInputValue(\"delete_button\",  this.id.concat(\"_\", Math.random()))')
-            
-            # Update list & render venn Diagram and UpSet plot
-            geneList[[length(geneList)+1]] <<- row.names(significant_results)
+            # set 2nd variable as vector so it can be used in loop
+            if(input$contrastUpDown_2 == "Add all"){
+              secondVariable = variables[variables != input$contrastUpDown_1]
+              }
+            else{
+              secondVariable = input$contrastUpDown_2
+              }
+            for(i in secondVariable){
+              # Check for duplicated entries (and ignore them)
+              if(paste(input$contrastUpDown_1, "VS", i) %in% overview$data$'Conditions/Comparison'){
+                showNotification(paste(input$contrastUpDown_1, "VS", i, "was already added to table and is therefore omitted."), type = "warning")
+              }
+              else{
+                # get results, add gene names, product description, fold change, avgTPM and sort
+                resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, i))
+                resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
+                # add to list: 
+                resultsList[[length(resultsList)+1]] <<- resultsTable
+                #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
+                significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
+                signResultsList[[length(signResultsList)+1]] <<- significant_results
+                significant_overview = significantOverview(significant_results, input$contrastUpDown_1, i)
+                # Update overview and genelist, render table
+                updateOverviewDataTable(overviewReactiveValues = overview, significantOverviewEntry = significant_overview)
+                geneList[[length(geneList)+1]] <<- row.names(significant_results)
+              }
+            }
+            # render plots (upset & venn):
             if(length(geneList) >= 2){
               if(table(overview$data$TOTAL == 0)[1] >= 2){
                 # UpsetR will crash if there are are less than two non-empty elements in list
@@ -303,10 +309,10 @@ server = shinyServer(function(input, output, session){
             }
           }
         }
-        ) # add contrast to overview table close
+        )
         
         
-        # ===== Differential Expression: Displaying Results ===== #
+        # ===== Differential Expression: Displaying Results (Pop-Up) ===== #
         
         observeEvent(input$genes_button, {
           rowIndex = as.numeric(strsplit(input$genes_button, "_")[[1]][2])
@@ -354,7 +360,6 @@ server = shinyServer(function(input, output, session){
               write.csv(signResultsList[[rowIndex]], file, row.names = TRUE)
             }
           )
-          
         })
         
         
