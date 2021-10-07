@@ -117,7 +117,6 @@ server = shinyServer(function(input, output, session){
           incProgress(0.2, detail = "Rendering normalized tables")
           output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
           output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
-          
           incProgress(0.2, detail = "Done.")
         })
         
@@ -295,7 +294,7 @@ server = shinyServer(function(input, output, session){
                 else{
                   # get results, add gene names, product description, fold change, avgTPM and sort
                   resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, i))
-                  resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
+                  resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable, contrast1 = input$contrastUpDown_1, contrast2 = i)
                   # add to list: 
                   resultsList[[length(resultsList)+1]] <<- resultsTable
                   #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)

@@ -162,20 +162,23 @@ addFoldChangeCol = function(dds_results){
 }
 
 
-# Add new columsn for average TPM and log2 of average TPM 
-addAverageTPM = function(dds_results, tpmTable){
-  dds_results$avgTPM = rowMeans(tpmTable)
-  #dds_results$'log2(avgTPM)' = log2(dds_results$avgTPM)
+# Add new columsn for average TPM and log2 of average TPM. Only uses columns of specified contrast for calculation 
+addAverageTPM = function(dds_results, tpmTable, contrast1, contrast2){
+  # get matching columns, ignore spaces, commas and underscores to resolve potential ambiguities 
+  tpmColumns = gsub(" |,|_", "", colnames(tpmTable))
+  matchingCols = grepl(gsub(" |,|_", "", contrast1), tpmColumns) | grepl(gsub(" |,|_", "", contrast2), tpmColumns)
+  
+  dds_results$avgTPM = rowMeans(tpmTable[, matchingCols])
   return(dds_results)
 }
 
 
 # Function to sum up all results-table-manipulation functions and resort table:
-extendAndSortResults = function(resultsData, gffFile, tpmData){
+extendAndSortResults = function(resultsData, gffFile, tpmData, contrast1, contrast2){
   resultsData = addGeneNameCol(resultsData)
   resultsData = addDescriptionCol(resultsData, gffFile)  
   resultsData = addFoldChangeCol(resultsData)
-  resultsData = addAverageTPM(resultsData, tpmData)
+  resultsData = addAverageTPM(resultsData, tpmData, contrast1, contrast2)
   resultsData = resultsData[,c(7,1,2,9,3,10,4:6,8)]
   return(resultsData)
 }
