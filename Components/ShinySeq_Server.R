@@ -25,26 +25,34 @@ server = shinyServer(function(input, output, session){
     req(input$infoFile)
     req(input$gffFile)
     
+    
     ## INPUT RAW DATA ##
-    countFile = input$countFile
-    rawdat = read.table(countFile$datapath, header = TRUE)
+    withProgress(message = "Reading Data", detail = "Reading raw counts", value = 0, {
+      countFile = input$countFile
+      rawdat = read.table(countFile$datapath, header = TRUE)
+      
+      ## INPUT INFO DATA ## 
+      incProgress(0.2, detail = "Reading experimental design")
+      infoFile = input$infoFile
+      infodat = read.csv(infoFile$datapath, sep = '\t')
+      
+      ## INPUT GFF FILE ## 
+      incProgress(0.2, detail = "Reading GFF")
+      gffFilePath = input$gffFile
+      gffdat = as.data.frame(readGFF(gffFilePath$datapath))
+      
+      ## SORT DATA ## 
+      incProgress(0.2, detail = "Parsing and disyplaing data")
+      dats = sortThatData(rawdat, infodat, gffdat)
+      rawCounts = dats[[1]]
+      infoData = dats[[2]]
+      
+      ## DISPLAY DATA ##
+      output$countTable = renderDataTable(rawCounts, rownames = TRUE)
+      output$designTable = renderDataTable(infoData, rownames = TRUE)
+      incProgress(0.4, detail = "Done.")
+    })
     
-    ## INPUT INFO DATA ## 
-    infoFile = input$infoFile
-    infodat = read.csv(infoFile$datapath, sep = '\t')
-    
-    ## INPUT GFF FILE ## 
-    gffFilePath = input$gffFile
-    gffdat = as.data.frame(readGFF(gffFilePath$datapath))
-    
-    ## SORT DATA ## 
-    dats = sortThatData(rawdat, infodat, gffdat)
-    rawCounts = dats[[1]]
-    infoData = dats[[2]]
-    
-    ## DISPLAY DATA ##
-    output$countTable = renderDataTable(rawCounts, rownames = TRUE)
-    output$designTable = renderDataTable(infoData, rownames = TRUE)
     
     # download counts
     output$downloadCounts = downloadHandler(
@@ -79,26 +87,39 @@ server = shinyServer(function(input, output, session){
                           so estimation of dispersion is not possible. Please select a column that contains replicates.", type = "error")
       }
       else{
-        ## CREATE DESEQ DATASET ##
-        designFormula = as.formula(paste0("~",input$variable))
-        dds = DESeqDataSetFromMatrix(countData = rawCounts[-1], colData =infoData, design = designFormula) 
-        dds = DESeq(dds)                                    
-        
-        ## DISPLAY NORMALIZED COUNTS ##
-        # normalization based on selected method (radio button)
-        if(input$normMethod == "Size Factor Division"){
-          normCounts = counts(dds, normalized = TRUE)
-        }
-        else if(input$normMethod == "VST"){
-          normObject = varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
-          normCounts = assay(normObject)
-        }
-        # else if(input$normMethod == "Quantile Normalization"){
-        #   # Quantile normalization is not included in DESeq2 => log-transform counts => remove -inf-values => normalize
-        #   logCount = logTransform(dats[[1]][,-1])
-        #   normCounts = normalize.quantiles(as.matrix(logCount), copy = TRUE)
-        # }
-        output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
+        withProgress(message = "Running DESeq", detail = "Creating DESeq-Dataset", value = 0, {
+          ## CREATE DESEQ DATASET ##
+          designFormula = as.formula(paste0("~",input$variable))
+          incProgress(0.2, detail = "Creating DESeq-Dataset")
+          dds = DESeqDataSetFromMatrix(countData = rawCounts[-1], colData =infoData, design = designFormula) 
+          dds = DESeq(dds)                                    
+          
+          ## DISPLAY NORMALIZED COUNTS ##
+          incProgress(0.2, detail = "Applying specified normalization")
+          # normalization based on selected method (radio button)
+          if(input$normMethod == "Size Factor Division"){
+            normCounts = counts(dds, normalized = TRUE)
+          }
+          else if(input$normMethod == "VST"){
+            normObject = varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
+            normCounts = assay(normObject)
+          }
+          # else if(input$normMethod == "Quantile Normalization"){
+          #   # Quantile normalization is not included in DESeq2 => log-transform counts => remove -inf-values => normalize
+          #   logCount = logTransform(dats[[1]][,-1])
+          #   normCounts = normalize.quantiles(as.matrix(logCount), copy = TRUE)
+          # }
+          
+          # TPM-normalization (always performed)
+          incProgress(0.2, detail = "Applying TPM normalization")
+          tpmTable = normalizeTPM(rawCounts, gffdat)
+          
+          incProgress(0.2, detail = "Rendering normalized tables")
+          output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
+          output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
+          
+          incProgress(0.2, detail = "Done.")
+        })
         
         # Download normalized counts
         output$downloadNormalizedCounts = downloadHandler(
@@ -110,10 +131,6 @@ server = shinyServer(function(input, output, session){
           }
         )
         
-        # TPM-normalization (always performed)
-        tpmTable = normalizeTPM(rawCounts, gffdat)
-        output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
-        
         # Download TPM counts
         output$downloadTPMCounts = downloadHandler(
           filename = function() {
@@ -123,7 +140,6 @@ server = shinyServer(function(input, output, session){
             write.csv(tpmTable, file, row.names = TRUE)
           }
         )
-        
         
         # Log-transform (if required). Will be used for heatmaps
         log2normCounts = normCounts
@@ -266,27 +282,35 @@ server = shinyServer(function(input, output, session){
               }
             else{
               secondVariable = input$contrastUpDown_2
-              }
-            for(i in secondVariable){
-              # Check for duplicated entries (and ignore them)
-              if(paste(input$contrastUpDown_1, "VS", i) %in% overview$data$'Conditions/Comparison'){
-                showNotification(paste(input$contrastUpDown_1, "VS", i, "was already added to table and is therefore omitted."), type = "warning")
-              }
-              else{
-                # get results, add gene names, product description, fold change, avgTPM and sort
-                resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, i))
-                resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
-                # add to list: 
-                resultsList[[length(resultsList)+1]] <<- resultsTable
-                #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
-                significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
-                signResultsList[[length(signResultsList)+1]] <<- significant_results
-                significant_overview = significantOverview(significant_results, input$contrastUpDown_1, i)
-                # Update overview and genelist, render table
-                updateOverviewDataTable(overviewReactiveValues = overview, significantOverviewEntry = significant_overview)
-                geneList[[length(geneList)+1]] <<- row.names(significant_results)
-              }
             }
+            withProgress(message = "Adding new element(s) to table", detail = paste("1 of", length(secondVariable)),value = 0, {
+              counter = 1
+              for(i in secondVariable){
+                counter = counter + 1
+                # Check for duplicated entries (and ignore them)
+                if(paste(input$contrastUpDown_1, "VS", i) %in% overview$data$'Conditions/Comparison'){
+                  showNotification(paste(input$contrastUpDown_1, "VS", i, "was already added to table and is therefore omitted."), type = "warning")
+                  incProgress(1/length(secondVariable), detail = paste(counter, "of", length(secondVariable)))
+                }
+                else{
+                  # get results, add gene names, product description, fold change, avgTPM and sort
+                  resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, i))
+                  resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable)
+                  # add to list: 
+                  resultsList[[length(resultsList)+1]] <<- resultsTable
+                  #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
+                  significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
+                  signResultsList[[length(signResultsList)+1]] <<- significant_results
+                  significant_overview = significantOverview(significant_results, input$contrastUpDown_1, i)
+                  # Update overview and genelist, render table
+                  updateOverviewDataTable(overviewReactiveValues = overview, significantOverviewEntry = significant_overview)
+                  geneList[[length(geneList)+1]] <<- row.names(significant_results)
+                  incProgress(1/length(secondVariable), detail = paste(counter, "of", length(secondVariable)))
+                }
+              } # for-loop-close
+              setProgress(value = 1, message = "Adding new element(s) to table", detail = "Done.")
+            }) # Progress bar close
+            
             # render plots (upset & venn):
             if(length(geneList) >= 2){
               if(table(overview$data$TOTAL == 0)[1] >= 2){
@@ -308,8 +332,7 @@ server = shinyServer(function(input, output, session){
               showNotification("Warning: Venn diagram only supports 2-4 dimensions. Addition of further dimensions will be ignored.", type = "warning")
             }
           }
-        }
-        )
+        })
         
         
         # ===== Differential Expression: Displaying Results (Pop-Up) ===== #
