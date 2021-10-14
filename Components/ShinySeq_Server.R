@@ -220,7 +220,7 @@ server = shinyServer(function(input, output, session){
           colAnno = data.frame(colData(dds)[, c(input$variable)])                                # annotation is based on the experimental variables the user chose before pressing the analyze button!
           row.names(colAnno) = row.names(colData(dds))                                           # if only one variable is selected, R omits the rownames meaning they need to be re-specified!
           colnames(colAnno) = input$variable                                                     # format column name
-          plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE)
+          plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE, annotation_names_col = FALSE)
           # plot heatmap:
           output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight)
         })

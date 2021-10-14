@@ -30,6 +30,24 @@ shinyInput <- function(FUN, len, id, ...) {
 
 ## RAW DATA MANIPULATION ##
 
+addInteractionColumns = function(conditionsColumns, designTable){
+  colNumber = ncol(conditionsColumns)
+  if(colNumber >= 2){
+    for(i in 2:colNumber){
+      colCombinations = combinations(colnames(conditionsColumns[,1:colNumber]), i)
+      for(j in 1:nrow(colCombinations)){
+        interactionName = paste(colCombinations[j,], collapse = "_")
+        designTable[,interactionName] = unite(conditionsColumns[,colCombinations[j,]], "merged", sep = ", ")$merged
+      }
+    }
+    return(designTable)
+  }
+  else{
+    return(designTable)
+  }
+}
+
+
 # Method to sort count data and infoData according to the experimental setup and gff-file
 sortThatData = function(rawCounts, infoData, gffData){
   # Purpose of this function is to sort the info data 
@@ -70,19 +88,19 @@ sortThatData = function(rawCounts, infoData, gffData){
   }
   
   
-  # Add a merged-treatment column to sample prep:
+  # Get condition-columns:
   is_treatment = grepl('condition', colnames(infoData), ignore.case = TRUE)
   treatments = data.frame(infoData[,is_treatment])
-  merged_treatments = unite(treatments, "merged", sep = ", ")
-  infoData$All_conditions = merged_treatments$merged
   
   # Change sample (column) names of rawCounts to sample prep (with suffix _1, _2, ... for replicates) and sort columns of counts according to info data
   merged_treatments = unite(treatments, "merged", sep = "_")
-  merged_treatments = make.unique.2(merged_treatments$merged, sep = "_") # enumarate duplicates
+  merged_treatments = make.unique.2(merged_treatments$merged, sep = "_") # enumerates duplicates
   colnames(rawCounts)[-1] = merged_treatments
-  #rawCounts = rawCounts[,c("Geneid", merged_treatments)]  # sort 
-  row.names(infoData) = merged_treatments
   
+  # Add interaction-columns to design table
+  infoData = addInteractionColumns(treatments, infoData)
+  row.names(infoData) = merged_treatments
+
   return(list(rawCounts, infoData))     
 }
 
