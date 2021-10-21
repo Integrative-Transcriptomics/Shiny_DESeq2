@@ -124,6 +124,22 @@ normalizeTPM = function(rawCounts, gffFile){
   return(tpmTable)
 }
 
+# Quantile normalization
+# https://davetang.org/muse/2014/07/07/quantile-normalisation-in-r/
+quantile_normalisation <- function(df){
+  df_rank <- apply(df,2,rank,ties.method="min")
+  df_sorted <- data.frame(apply(df, 2, sort))
+  df_mean <- apply(df_sorted, 1, mean)
+  
+  index_to_mean <- function(my_index, my_mean){
+    return(my_mean[my_index])
+  }
+  
+  df_final <- apply(df_rank, 2, index_to_mean, my_mean=df_mean)
+  rownames(df_final) <- rownames(df)
+  return(df_final)
+}
+
 
 # Method to log-transform AND remove rows containing -Inf values 
 logTransform = function(dataset){
@@ -336,6 +352,39 @@ makeUpset = function(geneList, overviewTable){
   names(geneList) = overviewTable$'Conditions/Comparison' #overviewTable[,1] 
   upsetPlot = upset(fromList(geneList), nsets = length(geneList))
   return(upsetPlot)
+}
+
+
+# Profile Plots:
+makeProfilePlot = function(tpmTable, geneList, summarize.replicates = TRUE, errorbars = FALSE){
+  
+  # Normalize
+  tpmTable = log2(tpmTable)
+  tpmTable = as.data.frame(quantile_normalisation(tpmTable))
+  
+  # Select specified genes and melt table
+  tpmTable$Gene = gsub(".*, ", "", row.names(tpmTable))
+  selectedTpm = tpmTable[tpmTable$Gene %in% geneList,]
+  selectedTpm = melt(selectedTpm, id.vars = "Gene")
+  
+  if(summarize.replicates){
+    # remove replicate suffix, which enables using the mean for gg-lineplots
+    selectedTpm$variable = gsub("*_.$", "", selectedTpm$variable) 
+  }
+  
+  # Plot
+  profilePlot = ggplot(data = selectedTpm, 
+                       aes(x = variable, y = value, color = Gene, group = Gene)) + 
+    stat_summary(geom = 'line', fun = 'mean') + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+    ylab("Quantile normalized log(TPM)") + xlab("Sample Condition")
+  
+  # Add errorbars
+  if(errorbars){
+    profilePlot = profilePlot + stat_summary(geom = 'errorbar', fun.data = "mean_se", aes(width = 0.2))
+  }
+  
+  return(profilePlot)
 }
 
 
