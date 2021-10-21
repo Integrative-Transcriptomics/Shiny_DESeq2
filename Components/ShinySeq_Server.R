@@ -113,7 +113,9 @@ server = shinyServer(function(input, output, session){
         # TPM-normalization (always performed)
         incProgress(0.2, detail = "Applying TPM normalization")
         tpmTable <<- normalizeTPM(rawCounts, gffdat)
-          
+        print("t1")
+        updateSelectizeInput(session, "profileGene", choices = gsub(".*, ", "", row.names(tpmTable)))
+        print("t2")
         incProgress(0.2, detail = "Rendering normalized tables")
         output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
         output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
@@ -232,7 +234,11 @@ server = shinyServer(function(input, output, session){
     # plot heatmap:
     output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight)
   })
-        
+  
+  ###################
+  ## PROFILE PLOTS ##
+  ###################
+  
         
   #####################################
   ## DIFFERENTIAL EXPRESSION SECTION ##

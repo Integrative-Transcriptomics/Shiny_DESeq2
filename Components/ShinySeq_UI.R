@@ -115,7 +115,20 @@ ui = fluidPage(
                                                                 mainPanel(plotOutput("heatGene"))
                                                                 ) # tabPanel "Genes" close
                                            ) # tabsetPanel close
-                                  ) # tabPanel "Heatmaps" close
+                                  ), # tabPanel "Heatmaps" close
+                                  tabPanel("Profile Plots",
+                                           sidebarPanel(
+                                             h4("Add genes to profile plot"),
+                                             selectizeInput("profileGene", "Gene name(s)", choices = "-", multiple = TRUE),
+                                             radioButtons("averageReplicates", "Average replicates?", choices = c("Yes", "No")),
+                                             radioButtons("profileErrorbars", "Add errorbars?", choices = c("Yes", "No")),
+                                             actionButton("profilePlotButton", "Refresh Plot!", width = '100%', class = "btn-warning"),
+                                             actionButton("profilePlotClear", "Clear Plot!", width = '100%', class = "btn-warning")
+                                           ),
+                                           mainPanel(
+                                             plotOutput("profilePlot")
+                                           )
+                                  ) # tabPanel "Profile Plots" close
                       )
              ), # tabPanel "Plots" close
              ### OVERVIEW TABLE OVER UP- AND DOWNREGULATED GENES ### 
