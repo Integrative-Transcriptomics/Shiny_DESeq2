@@ -70,8 +70,8 @@ ui = fluidPage(
                                            sidebarPanel(
                                              h4("Select up to two conditions:"),
                                              # 1 dropdown menu per condition:
-                                             selectInput("pca1", "First Condition (required):", "-"),
-                                             selectInput("pca2", "Second Condition (optional):", "-"),
+                                             selectInput("pca1", "First Condition (required):", ""),
+                                             selectInput("pca2", "Second Condition (optional):", ""),
                                              actionButton("pcaPlot", "Refresh Plot!", width = '100%', class = "btn-warning")
                                            ),
                                            mainPanel(plotOutput("pca", brush = "pca_brush"), verbatimTextOutput("pca_info"))), # interactive PCA plot

@@ -82,6 +82,8 @@ server = shinyServer(function(input, output, session){
   ### RUN DESEQ2 ###
   ##################
   observeEvent(input$analyze, {
+    req(input$upload)
+
     if(length(levels(as.factor(infoData[,input$variable]))) == nrow(infoData)){
         # selecting a column that contains no replicates results in crash of DESeq
         showNotification("Error: The design matrix has the same number of samples and coefficients to fit,
@@ -168,6 +170,7 @@ server = shinyServer(function(input, output, session){
   #############
   
   observeEvent(input$pcaPlot, {
+    req(input$pca1)
           
     # set variables for PCA:
     if(input$pca2 == "None"){
@@ -211,6 +214,8 @@ server = shinyServer(function(input, output, session){
   # ===== Heatmap of samples ===== #
         
   observeEvent(input$plotExperimentHeat, {
+    req(input$pca1) # using the updating process of pca1 to check if user uploaded and normalized data before (otherwise there would be a crash)
+    
     samp_dist = dist(t(log2normCounts))
     #color_gradient = colorRampPalette(c("white", "yellow", "orange" ,"red"))(1000)
     color_gradient = colorRampPalette(c("white", "yellow","orange", "red", "darkred"))(1000)
@@ -222,6 +227,8 @@ server = shinyServer(function(input, output, session){
   # ===== Heatmap of Genes based on highest variance ===== #
         
   observeEvent(input$plotGeneHeat, {
+    req(input$pca1)
+    
     # Selection of genes:
     numberOfGenes = input$geneHeatNo                                                       # number of genes the user wants to display
     highVarIndex = head(order(rowVars(log2normCounts), decreasing = TRUE), numberOfGenes)  # indexes of the [numberOfGenes] with highest variance
@@ -241,14 +248,27 @@ server = shinyServer(function(input, output, session){
   ###################
   
   observeEvent(input$profilePlotButton, {
-    # Function performs quantile normalization of log(tpmTable):
-    profilePlots = makeProfilePlots(tpmTable, 
-                                  geneList = input$profileGenes, 
-                                  summarize.replicates = input$averageProfileReplicates,
-                                  errorbars = input$profileErrorbars)  
+    req(input$pca1)
+    if(length(input$profileGenes) < 1){
+      showNotification("No genes selected for profile plot.", type = "warning")
+    }
+    else{
+      # Function performs quantile normalization of log(tpmTable):
+      profilePlots = makeProfilePlots(tpmTable, 
+                                      geneList = input$profileGenes, 
+                                      summarize.replicates = input$averageProfileReplicates,
+                                      errorbars = input$profileErrorbars)  
+      
+      output$profilePlotColored = renderPlot(profilePlots[[1]])
+      output$profilePlotBlack = renderPlot(profilePlots[[2]])
+      
+      # Error bars are only possible for averaged sample. Let user know:
+      if(!input$averageProfileReplicates & input$profileErrorbars){
+        showNotification("NOTE: Error bars are only possible for averaged replicates.", type = "warning")
+      }
+      
+    }
     
-    output$profilePlotColored = renderPlot(profilePlots[[1]])
-    output$profilePlotBlack = renderPlot(profilePlots[[2]])
   })
   
         
