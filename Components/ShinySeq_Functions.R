@@ -178,6 +178,7 @@ addDescriptionCol = function(dds_results, gff){
     # get CDS entries of gff-file and remove (potentially) duplicated locus tags
     gff = gff[gff$gbkey != "Gene",]
     gff = gff[!duplicated(gff$locus_tag),]
+    View(gff)
     
     dds_results$Description = NA
     dds_results[row.names(dds_results) %in% gff$locus_tag,]$Description = gff[gff$locus_tag %in% row.names(dds_results),]$product

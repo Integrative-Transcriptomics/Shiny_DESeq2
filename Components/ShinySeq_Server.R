@@ -101,7 +101,7 @@ server = shinyServer(function(input, output, session){
           normCounts <<- counts(dds, normalized = TRUE)
         }
         else if(input$normMethod == "VST"){
-          normObject = varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
+          normObject <<- varianceStabilizingTransformation(dds)  # S4 object, will e.g. be used in PCA
           normCounts <<- assay(normObject)
         }
         # else if(input$normMethod == "Quantile Normalization"){
