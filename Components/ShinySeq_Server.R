@@ -113,12 +113,11 @@ server = shinyServer(function(input, output, session){
         # TPM-normalization (always performed)
         incProgress(0.2, detail = "Applying TPM normalization")
         tpmTable <<- normalizeTPM(rawCounts, gffdat)
-        print("t1")
-        updateSelectizeInput(session, "profileGene", choices = gsub(".*, ", "", row.names(tpmTable)))
-        print("t2")
+        
         incProgress(0.2, detail = "Rendering normalized tables")
         output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
         output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
+        
         incProgress(0.2, detail = "Done.")
       })
       # Log-transform (if required). Will be used for heatmaps
@@ -133,10 +132,12 @@ server = shinyServer(function(input, output, session){
       updateSelectInput(session, "pca1", choices = colnames(colData(dds))[is_treatment])
       updateSelectInput(session, "pca2", choices = c("None", colnames(colData(dds))[is_treatment]))
       
-      
       # Update select inputs for differential expression section:
       variables <<- levels(factor(infoData[, c(input$variable)]))
       updateSelectInput(session, "contrastUpDown_1", choices = variables)
+      
+      # Update selectize input for profile plots (gene names):
+      updateSelectizeInput(session, "profileGenes", choices = gsub(".*, ", "", row.names(tpmTable)))
       
     }
   }) # analyze button close
@@ -238,6 +239,17 @@ server = shinyServer(function(input, output, session){
   ###################
   ## PROFILE PLOTS ##
   ###################
+  
+  observeEvent(input$profilePlotButton, {
+    # Function performs quantile normalization of log(tpmTable):
+    profilePlots = makeProfilePlots(tpmTable, 
+                                  geneList = input$profileGenes, 
+                                  summarize.replicates = input$averageProfileReplicates,
+                                  errorbars = input$profileErrorbars)  
+    
+    output$profilePlotColored = renderPlot(profilePlots[[1]])
+    output$profilePlotBlack = renderPlot(profilePlots[[2]])
+  })
   
         
   #####################################

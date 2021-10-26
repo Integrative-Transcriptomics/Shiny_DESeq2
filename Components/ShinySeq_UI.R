@@ -61,9 +61,11 @@ ui = fluidPage(
                                                        tabPanel("TPM-normalized", downloadButton("downloadTPMCounts", "Download"), dataTableOutput("tpmTable"))
                                            )
                                   ),
-                                  # BOXPLOTS 
+                                  
+                                  # ==== BOXPLOTS ==== # 
                                   tabPanel("Boxplots", plotOutput("boxplot")),
-                                  # PCA
+                                  
+                                  # ==== PCA ==== #
                                   tabPanel("PCA", 
                                            sidebarPanel(
                                              h4("Select up to two conditions:"),
@@ -73,7 +75,8 @@ ui = fluidPage(
                                              actionButton("pcaPlot", "Refresh Plot!", width = '100%', class = "btn-warning")
                                            ),
                                            mainPanel(plotOutput("pca", brush = "pca_brush"), verbatimTextOutput("pca_info"))), # interactive PCA plot
-                                  # HEATMAPS
+                                  
+                                  # ==== HEATMAPS ==== #
                                   tabPanel("Heatmaps", 
                                            tabsetPanel(type = "tabs",
                                                        tabPanel("Experiments", 
@@ -116,21 +119,25 @@ ui = fluidPage(
                                                                 ) # tabPanel "Genes" close
                                            ) # tabsetPanel close
                                   ), # tabPanel "Heatmaps" close
+                                  
+                                  # ==== PROFILE PLOTS ==== #
                                   tabPanel("Profile Plots",
                                            sidebarPanel(
                                              h4("Add genes to profile plot"),
-                                             selectizeInput("profileGene", "Gene name(s)", choices = "-", multiple = TRUE),
-                                             radioButtons("averageReplicates", "Average replicates?", choices = c("Yes", "No")),
-                                             radioButtons("profileErrorbars", "Add errorbars?", choices = c("Yes", "No")),
+                                             selectizeInput("profileGenes", "Gene name(s)", choices = "-", multiple = TRUE),
+                                             checkboxInput("averageProfileReplicates", "Average replicates", value = TRUE),
+                                             checkboxInput("profileErrorbars", "Add errorbars", value = FALSE),
                                              actionButton("profilePlotButton", "Refresh Plot!", width = '100%', class = "btn-warning"),
                                              actionButton("profilePlotClear", "Clear Plot!", width = '100%', class = "btn-warning")
                                            ),
                                            mainPanel(
-                                             plotOutput("profilePlot")
+                                             plotOutput("profilePlotBlack"),
+                                             plotOutput("profilePlotColored")
                                            )
                                   ) # tabPanel "Profile Plots" close
                       )
              ), # tabPanel "Plots" close
+             
              ### OVERVIEW TABLE OVER UP- AND DOWNREGULATED GENES ### 
              tabPanel("Differential Expression",
                       sidebarPanel(

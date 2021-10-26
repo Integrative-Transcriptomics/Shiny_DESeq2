@@ -126,17 +126,17 @@ normalizeTPM = function(rawCounts, gffFile){
 
 # Quantile normalization
 # https://davetang.org/muse/2014/07/07/quantile-normalisation-in-r/
-quantile_normalisation <- function(df){
-  df_rank <- apply(df,2,rank,ties.method="min")
-  df_sorted <- data.frame(apply(df, 2, sort))
-  df_mean <- apply(df_sorted, 1, mean)
+quantile_normalisation = function(df){
+  df_rank = apply(df,2,rank,ties.method="min")
+  df_sorted = data.frame(apply(df, 2, sort))
+  df_mean = apply(df_sorted, 1, mean)
   
-  index_to_mean <- function(my_index, my_mean){
+  index_to_mean = function(my_index, my_mean){
     return(my_mean[my_index])
   }
   
-  df_final <- apply(df_rank, 2, index_to_mean, my_mean=df_mean)
-  rownames(df_final) <- rownames(df)
+  df_final = apply(df_rank, 2, index_to_mean, my_mean=df_mean)
+  rownames(df_final) = rownames(df)
   return(df_final)
 }
 
@@ -220,7 +220,8 @@ extendAndSortResults = function(resultsData, gffFile, tpmData, contrast1, contra
 
 # Method to filter results data so it only contains significant genes (log FC >= 1 & p < alpha):
 filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
-  dataset = na.omit(dds_results)
+  
+  dataset = as.data.frame(dds_results[!is.na(dds_results$padj),])
   significant_data = dataset[(abs(dataset$log2FoldChange) > logFCThreshold & dataset$padj < alpha), ]
   
   return(significant_data)
@@ -232,13 +233,13 @@ filterSignificantGenes = function(dds_results, alpha, logFCThreshold){
 # Based on a (filtered) results-dataframe, make overview over up- and downregualted genes (single row of a dataframe):
 significantOverview = function(dds_results, contrastVariable1, contrastVariable2){
   comparisonString = paste(contrastVariable1, "VS", contrastVariable2) 
-  if(dds_results@nrows == 0){
+  if(nrow(dds_results) == 0){
     up = 0
     down = 0
     total = 0
   }
   else{
-    dataset = as.data.frame(na.omit(dds_results))
+    dataset = as.data.frame(dds_results)
     # Get infos from data:
     up =  nrow(dataset[(dataset$log2FoldChange > 0),])
     down = nrow(dataset[(dataset$log2FoldChange < 0),])
@@ -272,7 +273,7 @@ erupt = function(dds_results, logFCthreshold, alpha){
   
   fc_bound = logFCthreshold
   # transform results data
-  res = na.omit(as.data.frame(dds_results))
+  res = as.data.frame(dds_results[!is.na(dds_results$padj),])
   # significance
   res$Expression = "NS"                                          
   is_up = res$log2FoldChange >= fc_bound & res$padj < alpha       
@@ -355,9 +356,10 @@ makeUpset = function(geneList, overviewTable){
 }
 
 
-# Profile Plots:
-makeProfilePlot = function(tpmTable, geneList, summarize.replicates = TRUE, errorbars = FALSE){
+# Profile Plots (returns a colored plot and a black plot with mean line):
+makeProfilePlots = function(tpmTable, geneList, summarize.replicates = TRUE, errorbars = FALSE){
   
+  ## Data handling: 
   # Normalize
   tpmTable = log2(tpmTable)
   tpmTable = as.data.frame(quantile_normalisation(tpmTable))
@@ -365,26 +367,54 @@ makeProfilePlot = function(tpmTable, geneList, summarize.replicates = TRUE, erro
   # Select specified genes and melt table
   tpmTable$Gene = gsub(".*, ", "", row.names(tpmTable))
   selectedTpm = tpmTable[tpmTable$Gene %in% geneList,]
+  meanPerExperiment = as.data.frame(colMeans(selectedTpm[,1:ncol(selectedTpm)-1])) # for centroid (is basically already molten)
   selectedTpm = melt(selectedTpm, id.vars = "Gene")
+  selectedTpm$Status = "__Gene"
+  
+  # Prepare centroid data set (must have same colnames and -order as selectedTPM)
+  meanPerExperiment$Gene = "__Centroid"
+  meanPerExperiment$Status = "Centroid"
+  meanPerExperiment$variable = row.names(meanPerExperiment)
+  meanPerExperiment = meanPerExperiment[,c(2, 4, 1, 3)]
+  colnames(meanPerExperiment) = c("Gene", "variable", "value", "Status")
   
   if(summarize.replicates){
     # remove replicate suffix, which enables using the mean for gg-lineplots
-    selectedTpm$variable = gsub("*_.$", "", selectedTpm$variable) 
+    selectedTpm$variable = gsub("*_.$", "", selectedTpm$variable)
+    meanPerExperiment$variable = gsub("*_.$", "", meanPerExperiment$variable)
   }
   
-  # Plot
-  profilePlot = ggplot(data = selectedTpm, 
+  ## Gene-wise (colored) plot:
+  profilePlotColored = ggplot(data = selectedTpm, 
                        aes(x = variable, y = value, color = Gene, group = Gene)) + 
     stat_summary(geom = 'line', fun = 'mean') + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-    ylab("Quantile normalized log(TPM)") + xlab("Sample Condition")
+    ylab("Quantile normalized log(TPM)") + xlab("Sample Condition") + ggtitle("Gene-wise expression profiles")
   
-  # Add errorbars
+  ## Mean-expression plot:
+  selectedTPMWithCentroid = rbind(selectedTpm, meanPerExperiment)
+  profilePlotMean = ggplot(data = selectedTPMWithCentroid,
+                              aes(x = variable, y = value, group = Gene, color = Status)) + 
+    stat_summary(aes(size = Status, alpha = Status), geom = 'line', fun = 'mean') +
+    scale_alpha_discrete(range = c(0.2, 1)) + 
+    scale_size_discrete(range = c(0.4, 1.1)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+    scale_color_manual(values = c("black", "red")) + 
+    ylab("Quantile normalized log(TPM)") + xlab("Sample Condition") + ggtitle("Mean of selected expression profiles") + 
+    theme(legend.position = "none")
+
+  
+  # Add errorbars (colored plot only)
   if(errorbars){
-    profilePlot = profilePlot + stat_summary(geom = 'errorbar', fun.data = "mean_se", aes(width = 0.2))
+    profilePlotColored = profilePlotColored + stat_summary(geom = 'errorbar', fun.data = "mean_se", aes(width = 0.2))
   }
   
-  return(profilePlot)
+  # # Potential ToDo: Legend of for colored plot is cut off if > 14 genes are selected
+  # if(length(geneList) > 14){
+  #   profilePlotColored = profilePlotColored + theme(legend.position = "bottom")
+  # }
+  
+  return(list(profilePlotColored, profilePlotMean))
 }
 
 
