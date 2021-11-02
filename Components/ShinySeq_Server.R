@@ -269,6 +269,11 @@ server = shinyServer(function(input, output, session){
     }
   })
   
+  observeEvent(input$profilePlotClear, {
+    req(input$pca1)
+    updateSelectizeInput(session, "profileGenes", choices = gsub(".*, ", "", row.names(tpmTable)))
+  })
+  
   # Download gene profile data
   output$downloadProfileData = downloadHandler(
     filename = function() {
