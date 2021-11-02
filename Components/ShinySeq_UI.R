@@ -128,7 +128,8 @@ ui = fluidPage(
                                              checkboxInput("averageProfileReplicates", "Average replicates", value = TRUE),
                                              checkboxInput("profileErrorbars", "Add errorbars", value = FALSE),
                                              actionButton("profilePlotButton", "Refresh Plot!", width = '100%', class = "btn-warning"),
-                                             actionButton("profilePlotClear", "Clear Plot!", width = '100%', class = "btn-warning")
+                                             #actionButton("profilePlotClear", "Clear Plot!", width = '100%', class = "btn-warning"),  # clear-button is not really required with selectize inputs
+                                             downloadButton("downloadProfileData", "Download Gene Profile Data")
                                            ),
                                            mainPanel(
                                              plotOutput("profilePlotBlack"),

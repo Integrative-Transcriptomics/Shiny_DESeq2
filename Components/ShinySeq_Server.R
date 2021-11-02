@@ -254,7 +254,7 @@ server = shinyServer(function(input, output, session){
     }
     else{
       # Function performs quantile normalization of log(tpmTable):
-      profilePlots = makeProfilePlots(tpmTable, 
+      profilePlots <<- makeProfilePlots(tpmTable, 
                                       geneList = input$profileGenes, 
                                       summarize.replicates = input$averageProfileReplicates,
                                       errorbars = input$profileErrorbars)  
@@ -266,10 +266,19 @@ server = shinyServer(function(input, output, session){
       if(!input$averageProfileReplicates & input$profileErrorbars){
         showNotification("NOTE: Error bars are only possible for averaged replicates.", type = "warning")
       }
-      
     }
-    
   })
+  
+  # Download gene profile data
+  output$downloadProfileData = downloadHandler(
+    filename = function() {
+      paste0("profile_data.csv")
+    },
+    content = function(file) {
+      write.csv(profilePlots[[1]][["data"]], file, row.names = TRUE)
+    }
+  )
+  
   
         
   #####################################
