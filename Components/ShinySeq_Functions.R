@@ -315,12 +315,13 @@ makePCA = function(pcaData, pcaGroups){
   # if the first variable is numeric, ggplot makes a color scale, which is not desired:
   pcaData[["data"]][[pcaGroups[1]]] = as.factor(pcaData[["data"]][[pcaGroups[1]]])
   
+  test <<- pcaData
+  test2 <<- pcaGroups
   # colors only, if there is only one group of interest:
   if(length(pcaGroups) == 1){
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]])) +
       geom_point(size = 2) +
-      theme(legend.title = element_blank()) + 
-      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"])
+      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"], color = pcaGroups)
   }
   # colors + shapes, if there are two groups:
   else{
@@ -329,8 +330,7 @@ makePCA = function(pcaData, pcaGroups){
     
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]], shape = pcaData[["data"]][[pcaGroups[2]]])) +
       geom_point(size = 2) +
-      theme(legend.title = element_blank()) + 
-      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"]) +
+      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"], color = pcaGroups[1], shape = pcaGroups[2]) +
       scale_shape_manual(values = 1:nlevels(pcaData[["data"]][[pcaGroups[2]]]))
   }
   return(pcaPlot)
