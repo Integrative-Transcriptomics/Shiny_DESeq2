@@ -91,7 +91,8 @@ sortThatData = function(rawCounts, infoData, gffData){
   rawCounts = rawCounts[,c("Geneid", row.names(infoData))]
   
   # Change row names of raw counts to "locus_tag, gene name" (only tag, if gff-file has no corresponding gene): 
-  names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey == "Gene",]$Name  # Match locus_tag of gff with Geneid and get gene names
+  names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey %in% c("Gene", "gene"),]$Name  # Match locus_tag of gff with Geneid and get gene names
+  names[which(is.na(names))] = ""                                                                        # Otherwise the corresponding entry migh be NA (depends on gfffile) and might cause problems
   row.names(rawCounts) = rawCounts$Geneid
   if(length(names) > 0){
     # (if no matches between GeneID and gff$locus_tag were found, length(names) is 0) 
@@ -192,7 +193,7 @@ addDescriptionCol = function(dds_results, gff){
   }
   else{
     # get CDS entries of gff-file and remove (potentially) duplicated locus tags
-    gff = gff[gff$gbkey != "Gene",]
+    gff = gff[!gff$gbkey %in% c("Gene", "gene"),]
     gff = gff[!duplicated(gff$locus_tag),]
     
     dds_results$Description = NA
