@@ -39,7 +39,8 @@ server = shinyServer(function(input, output, session){
       ## INPUT GFF FILE ## 
       incProgress(0.2, detail = "Reading GFF")
       gffFilePath = input$gffFile
-      gffdat <<- as.data.frame(readGFF(gffFilePath$datapath))
+      gffdat <<- checkGFF(as.data.frame(readGFF(gffFilePath$datapath)))
+      
       
       ## SORT DATA ## 
       incProgress(0.2, detail = "Parsing and disyplaing data")

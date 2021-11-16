@@ -30,6 +30,16 @@ shinyInput <- function(FUN, len, id, ...) {
 
 ## RAW DATA MANIPULATION ##
 
+# Many functions require a column 'gbkey' in the GFF. Sometimes the column is called 'type' instead causing several issues.
+checkGFF = function(gffFile){
+  if(!"gbkey" %in% colnames(gffFile)){
+    colnames(gffFile)[colnames(gffFile) == 'type'] <- 'gbkey'
+  }
+  return(gffFile)
+}
+
+
+# Helper-function that is called in sortThatData(). Concatenates every possible combination of columns containing 'condition' 
 addInteractionColumns = function(conditionsColumns, designTable){
   colNumber = ncol(conditionsColumns)
   if(colNumber >= 2){
@@ -46,6 +56,8 @@ addInteractionColumns = function(conditionsColumns, designTable){
     return(designTable)
   }
 }
+
+
 
 
 # Method to sort count data and infoData according to the experimental setup and gff-file
@@ -160,13 +172,13 @@ addGeneNameCol = function(dds_results){
     # Separate row.names (usually they are composed by locus_tag, gene_name):
     splitVector <<- strsplit(row.names(dds_results), ", ")
     splitData = t(as.data.frame(splitVector))
-    # Assign:
+    # Assign locus_tag ar rownames and add gene names:
     row.names(dds_results) = splitData[,1]
     if(ncol(splitData) >= 2){
-      dds_results$'Gene name' = splitData[,2]
+      dds_results$'Gene name' = splitData[,2]           # sets gene name either to locus tag (if no gene has been found) or corresponding gene name in gff
     }
     else{
-      dds_results$'Gene name' = NA
+      dds_results$'Gene name' = row.names(dds_results)  # set gene name to locus tag, if no genes have been found
     }
     return(dds_results)
   }
