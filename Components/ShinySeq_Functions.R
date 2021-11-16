@@ -120,7 +120,6 @@ normalizeTPM = function(rawCounts, gffFile){
   totalSampleReadsPerMillion = colSums(rpkTable)/1e6 
   tpmTable = sweep(rpkTable, MARGIN = 2, totalSampleReadsPerMillion, FUN = "/")
   #tpmTable = tpmTable + 1  # add pseudo-counts
-  
   return(tpmTable)
 }
 
@@ -158,12 +157,17 @@ addGeneNameCol = function(dds_results){
     return(dds_results)
   }
   else{
-    # Separate row.names:
-    splitVector = strsplit(row.names(dds_results), ", ")
+    # Separate row.names (usually they are composed by locus_tag, gene_name):
+    splitVector <<- strsplit(row.names(dds_results), ", ")
     splitData = t(as.data.frame(splitVector))
     # Assign:
     row.names(dds_results) = splitData[,1]
-    dds_results$'Gene name' = splitData[,2]
+    if(ncol(splitData) >= 2){
+      dds_results$'Gene name' = splitData[,2]
+    }
+    else{
+      dds_results$'Gene name' = NA
+    }
     return(dds_results)
   }
 }
@@ -315,8 +319,6 @@ makePCA = function(pcaData, pcaGroups){
   # if the first variable is numeric, ggplot makes a color scale, which is not desired:
   pcaData[["data"]][[pcaGroups[1]]] = as.factor(pcaData[["data"]][[pcaGroups[1]]])
   
-  test <<- pcaData
-  test2 <<- pcaGroups
   # colors only, if there is only one group of interest:
   if(length(pcaGroups) == 1){
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]])) +
