@@ -72,6 +72,12 @@ ui = fluidPage(
                                              # 1 dropdown menu per condition:
                                              selectInput("pca1", "First Condition (required):", ""),
                                              selectInput("pca2", "Second Condition (optional):", ""),
+                                             sliderInput("pcaFont", 
+                                                         "Font Size:", 
+                                                         min = 10, 
+                                                         max = 20, 
+                                                         step = 1, 
+                                                         value = 11),
                                              actionButton("pcaPlot", "Refresh Plot!", width = '100%', class = "btn-warning")
                                            ),
                                            mainPanel(plotOutput("pca", brush = "pca_brush"), verbatimTextOutput("pca_info"))), # interactive PCA plot
@@ -127,13 +133,37 @@ ui = fluidPage(
                                              selectizeInput("profileGenes", "Gene name(s)", choices = "-", multiple = TRUE),
                                              checkboxInput("averageProfileReplicates", "Average replicates", value = TRUE),
                                              checkboxInput("profileErrorbars", "Add errorbars", value = FALSE),
+                                             sliderInput("profileFont", 
+                                                         "Font Size:", 
+                                                         min = 10, 
+                                                         max = 20, 
+                                                         step = 1, 
+                                                         value = 11),
+                                             sliderInput("profileHeight", 
+                                                         "Plot Height (Px):", 
+                                                         min = 100, 
+                                                         max = 1200, 
+                                                         step = 5, 
+                                                         value = 400),
+                                             sliderInput("profileWidth", 
+                                                         "Plot Width (Px):", 
+                                                         min = 100, 
+                                                         max = 1200, 
+                                                         step = 4, 
+                                                         value = 700),
                                              actionButton("profilePlotButton", "Refresh Plot!", width = '100%', class = "btn-warning"),
                                              actionButton("profilePlotClear", "Clear Selection", width = '100%', class = "btn-warning"),
                                              downloadButton("downloadProfileData", "Download Gene Profile Data")
                                            ),
                                            mainPanel(
-                                             plotOutput("profilePlotBlack"),
-                                             plotOutput("profilePlotColored")
+                                             tabsetPanel(type = "tabs",
+                                                         tabPanel("Sample Profiles",
+                                                                  plotOutput("profilePlotColored")
+                                                         ),
+                                                         tabPanel("Mean Expression Profile",
+                                                                  plotOutput("profilePlotBlack")
+                                                         )
+                                             )
                                            )
                                   ) # tabPanel "Profile Plots" close
                       )

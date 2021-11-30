@@ -329,7 +329,7 @@ erupt = function(dds_results, logFCthreshold, alpha){
 
 
 # Create PCA plot (w. ggplot2) based on a pca dataset and a vector of variables with either one (color) or two variables (color+shape)
-makePCA = function(pcaData, pcaGroups){
+makePCA = function(pcaData, pcaGroups, fontSize = 11){
   # if the first variable is numeric, ggplot makes a color scale, which is not desired:
   pcaData[["data"]][[pcaGroups[1]]] = as.factor(pcaData[["data"]][[pcaGroups[1]]])
   
@@ -337,7 +337,8 @@ makePCA = function(pcaData, pcaGroups){
   if(length(pcaGroups) == 1){
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]])) +
       geom_point(size = 2) +
-      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"], color = pcaGroups)
+      labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"], color = pcaGroups) + 
+      theme_grey(base_size = fontSize)
   }
   # colors + shapes, if there are two groups:
   else{
@@ -347,7 +348,8 @@ makePCA = function(pcaData, pcaGroups){
     pcaPlot = ggplot(pcaData[["data"]], aes(x = PC1, y = PC2, color = pcaData[["data"]][[pcaGroups[1]]], shape = pcaData[["data"]][[pcaGroups[2]]])) +
       geom_point(size = 2) +
       labs(x = pcaData[["labels"]][["x"]], y = pcaData[["labels"]]["y"], color = pcaGroups[1], shape = pcaGroups[2]) +
-      scale_shape_manual(values = 1:nlevels(pcaData[["data"]][[pcaGroups[2]]]))
+      scale_shape_manual(values = 1:nlevels(pcaData[["data"]][[pcaGroups[2]]])) +
+      theme_grey(base_size = fontSize)
   }
   return(pcaPlot)
 }
@@ -373,7 +375,7 @@ makeUpset = function(geneList, overviewTable){
 
 
 # Profile Plots (returns a colored plot and a black plot with mean line):
-makeProfilePlots = function(tpmTable, geneList, summarize.replicates = TRUE, errorbars = FALSE){
+makeProfilePlots = function(tpmTable, geneList, summarize.replicates = TRUE, errorbars = FALSE, fontsize = 11){
   
   ## Data handling: 
   # Normalize
@@ -402,22 +404,25 @@ makeProfilePlots = function(tpmTable, geneList, summarize.replicates = TRUE, err
   
   ## Gene-wise (colored) plot:
   profilePlotColored = ggplot(data = selectedTpm, 
-                       aes(x = variable, y = value, color = Gene, group = Gene)) + 
+                       aes(x = variable, y = value, color = Gene, group = Gene)) +
+    theme_grey(base_size = fontsize) +
     stat_summary(geom = 'line', fun = 'mean') + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
     ylab("Quantile normalized log(TPM)") + xlab("Sample Condition") + ggtitle("Gene-wise expression profiles")
+    
   
   ## Mean-expression plot:
   selectedTPMWithCentroid = rbind(selectedTpm, meanPerExperiment)
   profilePlotMean = ggplot(data = selectedTPMWithCentroid,
                               aes(x = variable, y = value, group = Gene, color = Status)) + 
+    theme_grey(base_size = fontsize) +
     stat_summary(aes(size = Status, alpha = Status), geom = 'line', fun = 'mean') +
     scale_alpha_discrete(range = c(0.2, 1)) + 
     scale_size_discrete(range = c(0.4, 1.1)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
     scale_color_manual(values = c("black", "red")) + 
     ylab("Quantile normalized log(TPM)") + xlab("Sample Condition") + ggtitle("Mean of selected expression profiles") + 
-    theme(legend.position = "none")
+    theme(legend.position = "none") 
 
   
   # Add errorbars (colored plot only)

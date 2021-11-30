@@ -192,7 +192,7 @@ server = shinyServer(function(input, output, session){
     }
     # plot
     output$pca = renderPlot({
-      makePCA(pcaData = pca, pcaGroups = pcaGroups)
+      makePCA(pcaData = pca, pcaGroups = pcaGroups, fontSize = input$pcaFont)
     }) # render pca plot close
           
     # pca interactive brush info
@@ -258,10 +258,11 @@ server = shinyServer(function(input, output, session){
       profilePlots <<- makeProfilePlots(tpmTable, 
                                       geneList = input$profileGenes, 
                                       summarize.replicates = input$averageProfileReplicates,
-                                      errorbars = input$profileErrorbars)  
+                                      errorbars = input$profileErrorbars,
+                                      fontsize = input$profileFont)  
       
-      output$profilePlotColored = renderPlot(profilePlots[[1]])
-      output$profilePlotBlack = renderPlot(profilePlots[[2]])
+      output$profilePlotColored = renderPlot(profilePlots[[1]], height = input$profileHeight, width = input$profileWidth)
+      output$profilePlotBlack = renderPlot(profilePlots[[2]], height = input$profileHeight, width = input$profileWidth)
       
       # Error bars are only possible for averaged sample. Let user know:
       if(!input$averageProfileReplicates & input$profileErrorbars){
