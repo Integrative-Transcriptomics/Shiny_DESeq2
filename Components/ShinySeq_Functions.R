@@ -96,8 +96,9 @@ sortThatData = function(rawCounts, infoData, gffData){
   row.names(rawCounts) = rawCounts$Geneid
   if(length(names) > 0){
     # (if no matches between GeneID and gff$locus_tag were found, length(names) is 0) 
-    combined_names = unite(data.frame(row.names(rawCounts), names), col = "merged", sep = ", ")
+    combined_names = unite(data.frame(row.names(rawCounts), names), col = "merged", sep = ", ")  # merge tags and genenames (=> comma-seperated)
     row.names(rawCounts)[rawCounts$Geneid != names] = combined_names[rawCounts$Geneid != names,]
+    row.names(rawCounts) = gsub("\\, $", "", rownames(rawCounts))  # remove commas if they are the last character
   }
   
   
