@@ -356,20 +356,20 @@ makePCA = function(pcaData, pcaGroups, fontSize = 11){
 
 
 # Create venn diagram from list of gene-vectors and overview table (for labels)
-makeVenn = function(geneList, overviewTable){
+makeVenn = function(geneList, overviewTable, fontsize = 11){
   vennDiagram = ggVennDiagram(geneList, 
                               #category.names = overviewTable$'Conditions/Comparison',  # CURRENTLY PROBLEMATIC WITH LONG NAMES
-                              label = "count") + 
-    theme(legend.position = "none") 
+                              label = "count", set_size = fontsize, label_size = fontsize-5) + 
+    theme(legend.position = "none")
   return(vennDiagram)
 }
 
 
 # Function to make people really upset
 # Upset plot based on genelist and overview table (for labels)
-makeUpset = function(geneList, overviewTable){
+makeUpset = function(geneList, overviewTable, fontsize = 11){
   names(geneList) = overviewTable$'Conditions/Comparison' #overviewTable[,1] 
-  upsetPlot = upset(fromList(geneList), nsets = length(geneList))
+  upsetPlot = upset(fromList(geneList), nsets = length(geneList), text.scale = fontsize/8)
   return(upsetPlot)
 }
 

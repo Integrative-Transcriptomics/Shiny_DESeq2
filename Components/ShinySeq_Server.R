@@ -312,6 +312,7 @@ server = shinyServer(function(input, output, session){
   )  # empty table, will get updated
   output$overviewTable = renderDataTable(overview$data, rownames = FALSE, escape = FALSE)
   output$foldChangeInfo = renderText("The foldchange is always calculated as first group/second group or log(first group) - log(second group), respectively")
+  output$plotSizeInfo = renderText("Note: Plot size is updated when entries are added to table.")
   output$overviewInfo = renderText("Add at least 2 sets to overview table in order to display venn diagram and upset plot")
   output$vennDiagram = renderPlot({ggplot()})
   output$upsetPlot = renderPlot({ggplot()})
@@ -373,16 +374,16 @@ server = shinyServer(function(input, output, session){
       if(length(geneList) >= 2){
          if(table(overview$data$TOTAL == 0)[1] >= 2){
            # UpsetR will crash if there are are less than two non-empty elements in list
-          output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
+          output$upsetPlot = renderPlot({makeUpset(geneList, overview$data, fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
         }
               
         if(length(geneList) <= 4){
            # Venn diagram with >4 dimensions is too confusing
-           output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
+           output$vennDiagram = renderPlot({makeVenn(geneList, overview$data, fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
         }
          else{
           # if there are >4 entries, make sure the first 4 entries are contained in diagram
-          output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,])})
+          output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,], fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
          }
        }
       if(length(geneList) > 4){
@@ -391,6 +392,7 @@ server = shinyServer(function(input, output, session){
       }
     }
   }) # add to overview button close
+  
 
         
   # ===== Differential Expression: Displaying Results (Pop-Up) ===== #
@@ -471,14 +473,14 @@ server = shinyServer(function(input, output, session){
       resultsList[[rowIndex]] <<- NULL
       signResultsList[[rowIndex]] <<- NULL
       if(length(geneList) >= 2){
-        output$upsetPlot = renderPlot({makeUpset(geneList, overview$data)})
+        output$upsetPlot = renderPlot({makeUpset(geneList, overview$data, fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
         if(length(geneList) <= 4){
           # Venn diagram with >4 dimensions is too confusing
-          output$vennDiagram = renderPlot({makeVenn(geneList, overview$data)})
+          output$vennDiagram = renderPlot({makeVenn(geneList, overview$data, fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
         }
         else{
            # if there are >4 entries, make sure the first 4 entries are contained in diagram
-           output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,])})
+           output$vennDiagram = renderPlot({makeVenn(geneList[1:4], overview$data[1:4,], fontsize = input$overviewFont)}, height = input$overviewHeight, width = input$overviewWidth)
          }
       }
       else{
