@@ -191,10 +191,10 @@ server = shinyServer(function(input, output, session){
       pca = plotPCA(normObject, intgroup = pcaGroups)
     }
     # plot
-    output$pca = renderPlot({
-      makePCA(pcaData = pca, pcaGroups = pcaGroups, fontSize = input$pcaFont)
-    }) # render pca plot close
-          
+    output$pca = renderPlot({makePCA(pcaData = pca, pcaGroups = pcaGroups, fontSize = input$pcaFont)},
+      height = input$pcaHeight, width = input$pcaWidth
+    ) # render pca plot close
+    
     # pca interactive brush info
     output$pca_info = renderPrint({
       brushedPoints(pca[["data"]], input$pca_brush)
@@ -220,7 +220,7 @@ server = shinyServer(function(input, output, session){
     samp_dist = dist(t(log2normCounts))
     #color_gradient = colorRampPalette(c("white", "yellow", "orange" ,"red"))(1000)
     color_gradient = colorRampPalette(c("white", "yellow","orange", "red", "darkred"))(1000)
-    plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient, silent = TRUE)
+    plot_experiments = pheatmap(as.matrix(samp_dist), color = color_gradient, silent = TRUE, fontsize = input$experimentHeatFont)
     output$heatExp = renderPlot({plot_experiments}, height = input$experimentHeatHeight, width = input$experimentHeatWidth)
   })
         
@@ -239,9 +239,9 @@ server = shinyServer(function(input, output, session){
     colAnno = data.frame(colData(dds)[, c(input$variable)])                                # annotation is based on the experimental variables the user chose before pressing the analyze button!
     row.names(colAnno) = row.names(colData(dds))                                           # if only one variable is selected, R omits the rownames meaning they need to be re-specified!
     colnames(colAnno) = input$variable                                                     # format column name
-    plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE, annotation_names_col = FALSE)
+    plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE, annotation_names_col = FALSE, fontsize = input$geneHeatFont, treeheight_row = 5*input$geneHeatFont)
     # plot heatmap:
-    output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight)
+    output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight, width = input$geneHeatWidth)
   })
   
   ###################
