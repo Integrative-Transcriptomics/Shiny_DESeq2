@@ -205,7 +205,8 @@ ui = fluidPage(
              tabPanel("Differential Expression",
                       sidebarPanel(
                         h4("Specify Contrast"),
-                        selectInput("contrastUpDown_1", "First Experimental Group:", "-"),
+                        #selectInput("contrastUpDown_1", "First Experimental Group:", "-"),
+                        selectizeInput("contrastUpDown_1", "First Experimental Group(s):", choices = "-", multiple = TRUE),
                         selectInput("contrastUpDown_2", "Second Experimental Group:", "-"),
                         textOutput("foldChangeInfo"),
                         actionButton("addToOverview", "Add to table!", width = '100%',class = "btn-warning"),

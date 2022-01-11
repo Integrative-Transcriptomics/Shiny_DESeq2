@@ -137,7 +137,8 @@ server = shinyServer(function(input, output, session){
       
       # Update select inputs for differential expression section:
       variables <<- levels(factor(infoData[, c(input$variable)]))
-      updateSelectInput(session, "contrastUpDown_1", choices = variables)
+      #updateSelectInput(session, "contrastUpDown_1", choices = variables)
+      updateSelectizeInput(session, "contrastUpDown_1", choices = variables)
       
       # Update selectize input for profile plots (gene names):
       updateSelectizeInput(session, "profileGenes", choices = gsub(".*, ", "", row.names(tpmTable)))
@@ -294,7 +295,9 @@ server = shinyServer(function(input, output, session){
   
   observeEvent(input$contrastUpDown_1, {
     if(exists("variables")){
-      updateSelectInput(session, "contrastUpDown_2", choices = c(variables[variables != input$contrastUpDown_1], "Add all"))
+      # Update the 2nd select input based on elements that are not already chosen in the 1st select input
+      #updateSelectInput(session, "contrastUpDown_2", choices = c(variables[variables != input$contrastUpDown_1], "Add all"))
+      updateSelectInput(session, "contrastUpDown_2", choices = variables[!(variables %in% input$contrastUpDown_1)])
     }
   })
   
@@ -328,43 +331,43 @@ server = shinyServer(function(input, output, session){
     if(is.null(dds)){
       showNotification("Please run DESeq first", type = "error")
     }
-    req(dds)
-          
-    if(input$contrastUpDown_1 == input$contrastUpDown_2){
-      # DESeq crashes if experimental groups are the same
-      showNotification("Experimental groups must differ!", type = "error")
-    }
     else{
       # set 2nd variable as vector so it can be used in loop
-      if(input$contrastUpDown_2 == "Add all"){
-        secondVariable = variables[variables != input$contrastUpDown_1]
-        }
-      else{
-        secondVariable = input$contrastUpDown_2
-      }
-      withProgress(message = "Adding new element(s) to table", detail = paste("1 of", length(secondVariable)),value = 0, {
+      # if(input$contrastUpDown_2 == "Add all"){
+      #   secondVariable = variables[variables != input$contrastUpDown_1]
+      #   }
+      # else{
+      #   secondVariable = input$contrastUpDown_2
+      # }
+      withProgress(message = "Adding new element(s) to table", detail = paste("1 of", length(input$contrastUpDown_1)),value = 0, {
         counter = 1
-        for(i in secondVariable){
+        for(i in input$contrastUpDown_1){
           counter = counter + 1
+          # DESeq crashes if experimental groups are the same
+          if(i == input$contrastUpDown_2){
+            showNotification(paste(i, "VS", input$contrastUpDown_2, "was ommited, because the experimental groups must differ!"), type = "warning")
+            incProgress(1/length(input$contrastUpDown_1), detail = paste(counter, "of", length(input$contrastUpDown_1)))
+            next
+          }
           # Check for duplicated entries (and ignore them)
-          if(paste(input$contrastUpDown_1, "VS", i) %in% overview$data$'Conditions/Comparison'){
-            showNotification(paste(input$contrastUpDown_1, "VS", i, "was already added to table and is therefore omitted."), type = "warning")
-            incProgress(1/length(secondVariable), detail = paste(counter, "of", length(secondVariable)))
+          if(paste(i, "VS", input$contrastUpDown_2) %in% overview$data$'Conditions/Comparison'){
+            showNotification(paste(i, "VS", input$contrastUpDown_2, "was already added to table and is therefore omitted."), type = "warning")
+            incProgress(1/length(input$contrastUpDown_1), detail = paste(counter, "of", length(input$contrastUpDown_1)))
           }
           else{
             # get results, add gene names, product description, fold change, avgTPM and sort
-            resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, input$contrastUpDown_1, i))
-            resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable, contrast1 = input$contrastUpDown_1, contrast2 = i)
+            resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, i, input$contrastUpDown_2))
+            resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable, contrast1 = i, contrast2 = input$contrastUpDown_2)
             # add to list: 
             resultsList[[length(resultsList)+1]] <<- resultsTable
             #  filter out non-significant (p > alpha, log2FC < 1), get overview (amount of up-/downregulated genes)
             significant_results = filterSignificantGenes(dds_results = resultsTable, alpha = input$alpha, logFCThreshold = 1)
             signResultsList[[length(signResultsList)+1]] <<- significant_results
-            significant_overview = significantOverview(significant_results, input$contrastUpDown_1, i)
+            significant_overview = significantOverview(significant_results, i, input$contrastUpDown_2)
             # Update overview and genelist, render table
             updateOverviewDataTable(overviewReactiveValues = overview, significantOverviewEntry = significant_overview)
             geneList[[length(geneList)+1]] <<- row.names(significant_results)
-            incProgress(1/length(secondVariable), detail = paste(counter, "of", length(secondVariable)))
+            incProgress(1/length(input$contrastUpDown_1), detail = paste(counter, "of", length(input$contrastUpDown_1)))
           }
         } # for-loop-close
         setProgress(value = 1, message = "Adding new element(s) to table", detail = "Done.")
