@@ -356,7 +356,7 @@ server = shinyServer(function(input, output, session){
           }
           else{
             # get results, add gene names, product description, fold change, avgTPM and sort
-            resultsTable = results(dds, alpha = input$alpha, contrast = c(input$variable, i, input$contrastUpDown_2))
+            resultsTable = as.data.frame(results(dds, alpha = input$alpha, contrast = c(input$variable, i, input$contrastUpDown_2)))
             resultsTable = extendAndSortResults(resultsData = resultsTable, gffFile = gffdat, tpmData = tpmTable, contrast1 = i, contrast2 = input$contrastUpDown_2)
             # add to list: 
             resultsList[[length(resultsList)+1]] <<- resultsTable
@@ -435,7 +435,10 @@ server = shinyServer(function(input, output, session){
         paste0(overview$data[rowIndex, 2],".csv")
        },
        content = function(file) {
-         write.csv(resultsList[[rowIndex]], file, row.names = TRUE)
+         # Sort table by absolute logFC before download
+         dl_table = as.data.frame(resultsList[[rowIndex]])
+         dl_table = dl_table[sort(abs(dl_table$log2FoldChange), decreasing = TRUE, index.return = TRUE)[[2]],]
+         write.csv(dl_table, file, row.names = TRUE)
        }
      )
     output$downloadSignResults = downloadHandler(
@@ -443,7 +446,10 @@ server = shinyServer(function(input, output, session){
         paste0(overview$data[rowIndex, 2],".csv")
        },
       content = function(file) {
-         write.csv(signResultsList[[rowIndex]], file, row.names = TRUE)
+        # Sort table by absolute logFC before download
+        dl_table = signResultsList[[rowIndex]]
+        dl_table = dl_table[sort(abs(dl_table$log2FoldChange), decreasing = TRUE, index.return = TRUE)[[2]],]
+        write.csv(dl_table, file, row.names = TRUE)
       }
      )
    })
