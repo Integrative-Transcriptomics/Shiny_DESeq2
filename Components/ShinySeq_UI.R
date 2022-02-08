@@ -28,6 +28,7 @@ ui = fluidPage(
                         h4("Experimental Design"),
                         # Dropdown menu to specify design variable for DESeq Analysis
                         selectInput("variable", "Experimental Variable:", "-"),
+                        #selectizeInput("modelFormula", "Model Formula:", choices = "-", multiple = TRUE, options=list(create=TRUE)),
                         # Radio buttons to specify normalization method
                         radioButtons("normMethod", 
                                      "Normalization Method:",

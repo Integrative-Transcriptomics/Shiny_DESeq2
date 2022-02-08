@@ -55,6 +55,7 @@ server = shinyServer(function(input, output, session){
       
       ## UPDATE SELECINPUT FOR DESEQ BASED ON INFO DATA ##
       updateSelectInput(session, "variable", choices = factor(colnames(infoData)))
+      #updateSelectizeInput(session, "modelFormula", choices = factor(colnames(infoData)))
     })
   }) # upload button close
   
@@ -84,7 +85,7 @@ server = shinyServer(function(input, output, session){
   ##################
   observeEvent(input$analyze, {
     req(input$upload)
-
+    #print(input$modelFormula)
     if(length(levels(as.factor(infoData[,input$variable]))) == nrow(infoData)){
         # selecting a column that contains no replicates results in crash of DESeq
         showNotification("Error: The design matrix has the same number of samples and coefficients to fit,
@@ -255,6 +256,7 @@ server = shinyServer(function(input, output, session){
       showNotification("No genes selected for profile plot.", type = "warning")
     }
     else{
+      print(input$profileGenes)
       # Function performs quantile normalization of log(tpmTable):
       profilePlots <<- makeProfilePlots(tpmTable, 
                                       geneList = input$profileGenes, 

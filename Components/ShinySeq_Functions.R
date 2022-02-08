@@ -82,8 +82,9 @@ sortThatData = function(rawCounts, infoData, gffData){
   }
   
   row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
-  # row.names(rawCounts) = rawCounts[, 1]              # set row names of raw data to gene ID
-  rawCounts = rawCounts[,-(2:7),]                     
+  # remove not required columns
+  nonRequired = c("Chr", "Start", "End",	"Strand",	"Length",	"gene_name")
+  rawCounts = rawCounts[,!colnames(rawCounts) %in% nonRequired]                     
   
   #print(c("Geneid", row.names(infoData)))
   #infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
