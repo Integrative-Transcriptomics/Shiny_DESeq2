@@ -5,13 +5,12 @@ User-friendly shiny application for the interactive utilization of <a href=https
 The following section provides a quick rundown of the standard worklow and functions of DESeq2-Vis. When running DESeq2-Vis for the first time, all required packages will be installed automatically.
 
 ## 1. Data Upload & Analysis Paramenters
-The following steps mark the first step in the workflow of DESeq2-Vis and are carried out under the <tt>Data Upload & Analysis Paramenters</tt> tab.
 
 ### 1.1 Upload your data
 The following files are required for running DESeq2-Vis on your experimental data:
 <ol>
   <li> A <tt>.tsv</tt>-file containing the raw counts for each sample in one column and locus tags as rownames. Tables acquired from <tt>featureCounts</tt> can also be directly uploaded to DESeq2-Vis.
-  <li> An experimental design table (<tt>.tsv</tt>-file) containing sample names as row names and experimental conditions in columns. Each column containing an experimental condition to be analyzed must be indicated by containing the keyword <i>condition</i>. DESeq2-Vis will automatically scan this file and replace the column name of each sample in the counts-table by a merged string of the corresponding experimental conditions. A suffic indicating the replicate number is added to each sample name. Rows corresponding to samples that are contained in the counts-table will be removed from the design table.
+  <li> An experimental design table (<tt>.tsv</tt>-file) containing sample names as row names and experimental conditions in columns. Each column containing an experimental condition to be analyzed must be indicated by containing the keyword <i>condition</i>. DESeq2-Vis will automatically scan this file and replace the column name of each sample in the counts-table by a merged string of the corresponding experimental conditions. A suffix indicating the replicate number is added to each sample name. Rows corresponding to samples that are not contained in the counts-table will be removed from the design table.
   <li> A GFF-file containing annotations and gene descriptions. Based on the locus tags, the corresponding gene name is added to each locus tag (unannotated genes will only contain the locus tag).
   <li> Press the <tt>Upload!</tt> button to start the upload- and scanning process. 
 </ol>
@@ -30,7 +29,7 @@ The <tt>Normalization</tt>-tab provides an overview of the normalized data and g
 <ul>
   <li> <tt>Normalized Counts</tt>: Contains normalized counts based on the specified method as well as a TPM-normalized table.
   <li> <tt>Boxplots</tt>: Provides simple boxplots of the normalized counts for each sample for quality control purposes (WIP).
-  <li> <tt>PCA</tt>: Dot shape and color can be adjust based on up to two experimental conditions. Use sliders to adjust plot- and font-size. Plot the PCA by pressing the <tt>Refresh Plot!</tt>-button.
+  <li> <tt>PCA</tt>: Dot shape and color can be adjusted based on up to two experimental conditions. Use sliders to adjust plot- and font-size. Plot the PCA by pressing the <tt>Refresh Plot!</tt>-button.
   <li> <tt>Heatmaps</tt>: Contains two different, UPGMA-clustered heatmaps:
     <ul>
       <li> Pairwise distance between samples (euclidean distance of log2-normalized counts).
@@ -40,5 +39,14 @@ The <tt>Normalization</tt>-tab provides an overview of the normalized data and g
 </ul>
 
 ## 3. Differential Expression Analysis
-The calculation of differential expression is carried out under <tt>Differential Expression</tt>-tab.
+The calculation of differential expression is carried out under <tt>Differential Expression</tt>-tab. <br>
+
+The differential expression between two experimental groups is calculated as follows:
+<ol>
+  <li> Select a first and second experimental group. The log2-foldchange is calculated as $log$(1st group) - $log$(2nd group). 
+  <li> Upon pressing <tt>Add to table!</tt>, the amount of signficantly up- and down-regulated genes as well as the total amount of significantly differentially expressed genes is display in tabular format. 
+  <li> Press <tt>Show Genes</tt> to view the differential expression between the two conditions, gene descriptions as well as an interactive volcano plot.  
+</ol>
+Two or more differential expression results can be compared using a <tt>Venn Diagram</tt> or <tt>UpSet Plot</tt>. Sliders can be used to adjust the figure and font sizes.       
+
 
