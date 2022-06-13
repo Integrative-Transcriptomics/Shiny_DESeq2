@@ -4,7 +4,10 @@ User-friendly shiny application for the interactive utilization of <a href=https
 # Tutorial
 The following section provides a quick rundown of the standard worklow and functions of DESeq2-Vis. When running DESeq2-Vis for the first time, all required packages will be installed automatically.
 
-## 1. Data Upload
+## 1. Data Upload & Analysis Paramenters
+The following steps mark the first step in the workflow of DESeq2-Vis and are carried out under the <tt>Data Upload & Analysis Paramenters</tt> tab.
+
+### 1.1 Upload your data
 The following files are required for running DESeq2-Vis on your experimental data:
 <ol>
   <li> A <tt>.tsv</tt>-file containing the raw counts for each sample in one column and locus tags as rownames. Tables acquired from <tt>featureCounts</tt> can also be directly uploaded to DESeq2-Vis.
@@ -13,6 +16,29 @@ The following files are required for running DESeq2-Vis on your experimental dat
   <li> Press the <tt>Upload!</tt> button to start the upload- and scanning process. 
 </ol>
 
-## 2. Running DESeq on your data
-Select an <tt>Experimental Variable</tt> of your choice as a basis for the normalization 
+### 1.2 Run DESeq on your data
+<ol>
+  <li> Select an <tt>Experimental Variable</tt> of your choice as a basis for the normalization and differential expression analysis. 
+  <li> Select a normalization method. 
+  <li> Adjust the significance level.
+  <li> Press the <tt> Run DESeq!</tt> button in order to apply normalization.
+</ol>
+
+## 2. Normalization Results and Data Analyis
+The <tt>Normalization</tt>-tab provides an overview of the normalized data and general data analysis tools for quality control and gene profile analysis.
+
+<ul>
+  <li> <tt>Normalized Counts</tt>: Contains normalized counts based on the specified method as well as a TPM-normalized table.
+  <li> <tt>Boxplots</tt>: Provides simple boxplots of the normalized counts for each sample for quality control purposes (WIP).
+  <li> <tt>PCA</tt>: Dot shape and color can be adjust based on up to two experimental conditions. Use sliders to adjust plot- and font-size. Plot the PCA by pressing the <tt>Refresh Plot!</tt>-button.
+  <li> <tt>Heatmaps</tt>: Contains two different, UPGMA-clustered heatmaps:
+    <ul>
+      <li> Pairwise distance between samples (euclidean distance of log2-normalized counts).
+      <li> Heatmap of genes with the highest variance. Use the slider to adjust the amount of displayed genes and plot size.
+    </ul>
+   <li> <tt>Profile Plots</tt>: Use to display the the gene expression of one or multiple genes per condition or individual sample (use the checkbox <tt>Average replicates</tt> to switch). Gene profiles can be displayed as gene-wise expression profile (tab <tt>Sample Profiles</tt>) or <tt>Mean Expression Profile</tt> over all selected genes.  
+</ul>
+
+## 3. Differential Expression Analysis
+The calculation of differential expression is carried out under <tt>Differential Expression</tt>-tab.
 
