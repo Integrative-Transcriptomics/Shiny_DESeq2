@@ -241,8 +241,19 @@ server = shinyServer(function(input, output, session){
     colAnno = data.frame(colData(dds)[, c(input$variable)])                                # annotation is based on the experimental variables the user chose before pressing the analyze button!
     row.names(colAnno) = row.names(colData(dds))                                           # if only one variable is selected, R omits the rownames meaning they need to be re-specified!
     colnames(colAnno) = input$variable                                                     # format column name
-    plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, silent = TRUE, annotation_names_col = FALSE, fontsize = input$geneHeatFont, treeheight_row = 5*input$geneHeatFont)
+    # color scale:
+    palette_length=10000
+    max_value = ceiling(max(abs(topVarGenes)))
+    color_gradient = colorRampPalette(c("blue","lightblue","white","orange","red"))(palette_length)
+    color_beaks = seq(-max_value, max_value, length.out=palette_length+1)
     # plot heatmap:
+    plotGenes = pheatmap(topVarGenes, annotation_col = colAnno, 
+                         color=color_gradient, breaks=color_beaks, 
+                         legend_breaks = c(-max_value, -max_value/2, 0, max_value/2, max_value),
+                         silent = TRUE, annotation_names_col = FALSE, 
+                         fontsize = input$geneHeatFont, 
+                         treeheight_row = 5*input$geneHeatFont)
+    
     output$heatGene = renderPlot({plotGenes}, height = input$geneHeatHeight, width = input$geneHeatWidth)
   })
   

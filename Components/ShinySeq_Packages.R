@@ -12,7 +12,6 @@ if(length(req_biopackages)){BiocManager::install(req_biopackages)}
 # load packages
 library(arrangements)
 library(DESeq2)
-library(DT)
 library(ggplot2)
 library(ggVennDiagram)
 library(pheatmap)
@@ -24,5 +23,7 @@ library(shinyBS)
 library(shinythemes)
 library(tidyr)
 library(UpSetR)
+library(DT)
+
 
 options(repos = BiocManager::repositories()) # required for publishing the tool  
