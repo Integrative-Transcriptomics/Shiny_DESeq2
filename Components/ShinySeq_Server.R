@@ -65,7 +65,8 @@ server = shinyServer(function(input, output, session){
       paste0("sorted_counts.txt")
     },
     content = function(file) {
-      write.csv(rawCounts, file, row.names = TRUE)
+      # split row index of counts table into locus tag and gene name
+      write.csv(splitRowIndex(rawCounts), file, row.names = FALSE)
     }
   )
     
@@ -153,7 +154,8 @@ server = shinyServer(function(input, output, session){
       paste0("normalized_counts.txt")
     },
     content = function(file) {
-      write.csv(normCounts, file, row.names = TRUE)
+      # split row index of counts table into locus tag and gene name
+      write.csv(splitRowIndex(normCounts), file, row.names = FALSE)
     }
   )
         
@@ -163,7 +165,8 @@ server = shinyServer(function(input, output, session){
       paste0("TPM_counts.txt")
     },
     content = function(file) {
-      write.csv(tpmTable, file, row.names = TRUE)
+      # split row index of counts table into locus tag and gene name
+      write.csv(splitRowIndex(tpmTable), file, row.names = FALSE)
     }
   )
         

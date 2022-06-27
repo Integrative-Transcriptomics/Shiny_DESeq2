@@ -120,6 +120,17 @@ sortThatData = function(rawCounts, infoData, gffData){
 }
 
 
+# Method to split row index of a DF by comma into two columns => GeneID, Gene name
+splitRowIndex = function(countTable){
+  # get tags and gene names
+  locusTags = gsub(',.*', '', row.names(rawCounts))
+  geneNames = gsub('.*, ', '', row.names(rawCounts))
+  # merge with countTable, remove potential additional geneid column w. tags
+  newCounts = cbind(locusTags, geneNames, countTable[,!(tolower(colnames(countTable)) %in% "geneid")])
+  return(newCounts)
+}
+
+
 # TPM normalization
 normalizeTPM = function(rawCounts, gffFile){
   # remove locus tags that are not in rawCounts & calculate gene length
