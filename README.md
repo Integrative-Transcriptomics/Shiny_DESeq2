@@ -2,9 +2,19 @@
 User-friendly shiny application for the interactive utilization of <a href=https://doi.org/10.1186/s13059-014-0550-8>DESeq2</a>. In addition to providing the standard DESeq2 methods, DESeq2-Vis provides further normalization options, as well as the visualization of gene profiles.
 
 # Tutorial
-The following section provides a quick rundown of the standard worklow and functions of DESeq2-Vis. When running DESeq2-Vis for the first time, all required packages will be installed automatically.
+The following section provides a quick rundown of the standard worklow and functions of DESeq2-Vis.
+## 1. Run the tool
+Start R
 
-## 1. Data Upload & Analysis Paramenters
+Enter:
+
+library(shiny)
+
+runGitHub("Shiny_DESeq2", "Integrative-Transcriptomics")
+
+When running DESeq2-Vis for the first time, all required packages will be installed automatically.
+
+## 2. Data Upload & Analysis Paramenters
 
 ### 1.1 Upload your data
 The following files are required for running DESeq2-Vis on your experimental data:
@@ -15,7 +25,7 @@ The following files are required for running DESeq2-Vis on your experimental dat
   <li> Press the <tt>Upload!</tt> button to start the upload- and scanning process. 
 </ol>
 
-### 1.2 Run DESeq on your data
+### 2.2 Run DESeq on your data
 <ol>
   <li> Select an <tt>Experimental Variable</tt> of your choice as a basis for the normalization and differential expression analysis. 
   <li> Select a normalization method. 
@@ -23,7 +33,7 @@ The following files are required for running DESeq2-Vis on your experimental dat
   <li> Press the <tt> Run DESeq!</tt> button in order to apply normalization.
 </ol>
 
-## 2. Normalization Results and Data Analyis
+## 3. Normalization Results and Data Analyis
 The <tt>Normalization</tt>-tab provides an overview of the normalized data and general data analysis tools for quality control and gene profile analysis.
 
 <ul>
@@ -38,7 +48,7 @@ The <tt>Normalization</tt>-tab provides an overview of the normalized data and g
    <li> <tt>Profile Plots</tt>: Use to display the the gene expression of one or multiple genes per condition or individual sample (use the checkbox <tt>Average replicates</tt> to switch). Gene profiles can be displayed as gene-wise expression profile (tab <tt>Sample Profiles</tt>) or <tt>Mean Expression Profile</tt> over all selected genes.  
 </ul>
 
-## 3. Differential Expression Analysis
+## 4. Differential Expression Analysis
 The calculation of differential expression is carried out under <tt>Differential Expression</tt>-tab. <br>
 
 The differential expression between two experimental groups is calculated as follows:
