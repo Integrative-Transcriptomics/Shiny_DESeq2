@@ -59,7 +59,8 @@ ui = fluidPage(
                                   tabPanel("Normalized Counts",
                                            tabsetPanel(type = "tabs",
                                                        tabPanel("Specified method", downloadButton("downloadNormalizedCounts", "Download"), dataTableOutput("normalizedTable")),
-                                                       tabPanel("TPM-normalized", downloadButton("downloadTPMCounts", "Download"), dataTableOutput("tpmTable"))
+                                                       tabPanel("TPM-normalized", downloadButton("downloadTPMCounts", "Download"), dataTableOutput("tpmTable")),
+                                                       tabPanel("RPKnormalized", downloadButton("downloadRPKCounts", "Download"), dataTableOutput("rpkTable"))
                                            )
                                   ),
                                   

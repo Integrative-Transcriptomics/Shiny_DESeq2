@@ -1,7 +1,7 @@
 #### ========= SHINYSEQ SERVER ========== ####
 server = shinyServer(function(input, output, session){
   options(shiny.sanitize.errors = TRUE)
-  
+
   observeEvent(input$analyze, {
     
     ## Error message if data has not been uploaded before ## 
@@ -30,17 +30,17 @@ server = shinyServer(function(input, output, session){
     withProgress(message = "Reading Data", detail = "Reading raw counts", value = 0, {
       countFile = input$countFile
       rawdat = read.table(countFile$datapath, header = TRUE)
-      
+
       ## INPUT INFO DATA ## 
       incProgress(0.2, detail = "Reading experimental design")
       infoFile = input$infoFile
       infodat = read.csv(infoFile$datapath, sep = '\t')
-      
+
       ## INPUT GFF FILE ## 
       incProgress(0.2, detail = "Reading GFF")
       gffFilePath = input$gffFile
       gffdat <<- checkGFF(as.data.frame(readGFF(gffFilePath$datapath)))
-      
+
       
       ## SORT DATA ## 
       incProgress(0.2, detail = "Parsing and disyplaing data")
@@ -117,12 +117,13 @@ server = shinyServer(function(input, output, session){
           
         # TPM-normalization (always performed)
         incProgress(0.2, detail = "Applying TPM normalization")
+        rpkTable <<- normalizeRPK(rawCounts, gffdat)
         tpmTable <<- normalizeTPM(rawCounts, gffdat)
-        
+
         incProgress(0.2, detail = "Rendering normalized tables")
         output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
         output$normalizedTable = renderDataTable(datatable(normCounts) %>% formatRound(columns = c(1:ncol(normCounts)), digits = 2), rownames = TRUE)
-        
+        output$rpkTable = renderDataTable(datatable(rpkTable) %>% formatRound(columns = c(1:ncol(rpkTable)), digits = 2), rownames = TRUE)
         incProgress(0.2, detail = "Done.")
       })
       # Log-transform (if required). Will be used for heatmaps
@@ -270,7 +271,6 @@ server = shinyServer(function(input, output, session){
       showNotification("No genes selected for profile plot.", type = "warning")
     }
     else{
-      print(input$profileGenes)
       # Function performs quantile normalization of log(tpmTable):
       profilePlots <<- makeProfilePlots(tpmTable, 
                                       geneList = input$profileGenes, 

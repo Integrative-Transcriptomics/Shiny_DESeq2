@@ -80,11 +80,11 @@ sortThatData = function(rawCounts, infoData, gffData){
       }
     }
   }
-  
+
   row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
   # remove not required columns
   nonRequired = c("Chr", "Start", "End",	"Strand",	"Length",	"gene_name")
-  rawCounts = rawCounts[,!colnames(rawCounts) %in% nonRequired]                     
+  rawCounts = rawCounts[,!colnames(rawCounts) %in% nonRequired]      
   
   #print(c("Geneid", row.names(infoData)))
   #infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
@@ -101,8 +101,6 @@ sortThatData = function(rawCounts, infoData, gffData){
     row.names(rawCounts)[rawCounts$Geneid != names] = combined_names[rawCounts$Geneid != names,]
     row.names(rawCounts) = gsub("\\, $", "", rownames(rawCounts))  # remove commas if they are the last character
   }
-  
-  
   # Get condition-columns:
   is_treatment = grepl('condition', colnames(infoData), ignore.case = TRUE)
   treatments = data.frame(infoData[,is_treatment])
@@ -133,20 +131,34 @@ splitRowIndex = function(countTable){
 
 # TPM normalization
 normalizeTPM = function(rawCounts, gffFile){
-  # remove locus tags that are not in rawCounts & calculate gene length
-  gffFile = gffFile[!duplicated(gffFile$locus_tag),c("locus_tag", "start", "end")]
-  gffFile = gffFile[gffFile$locus_tag %in% rawCounts$Geneid,] 
-  gffFile$length = gffFile$end - gffFile$start
-  
   # normalize for gene length
-  rpkTable = rawCounts[,-1]
-  rpkTable = (rpkTable*1000)/gffFile$length
+  rpkTable = normalizeRPK(rawCounts,gffFile)
   
   # normalize for read depth
   totalSampleReadsPerMillion = colSums(rpkTable)/1e6 
   tpmTable = sweep(rpkTable, MARGIN = 2, totalSampleReadsPerMillion, FUN = "/")
   #tpmTable = tpmTable + 1  # add pseudo-counts
   return(tpmTable)
+}
+
+# Average coverage
+normalizeRPK = function(rawCounts, gffFile){
+  # remove locus tags that are not in rawCounts & calculate gene length
+  if("locus_tag" %in% colnames(gffFile)){
+    gffFile = gffFile[!duplicated(gffFile$locus_tag),c("locus_tag", "start", "end")]
+    idcol <- "locus_tag"
+  }
+  else{
+    gffFile = gffFile[!duplicated(gffFile$gene_id),c("gene_id", "start", "end")]
+    idcol <- "gene_id"
+  }
+  gffFile = gffFile[gffFile[,idcol] %in% rawCounts$Geneid,] 
+  gffFile$length = gffFile$end - gffFile$start
+  
+  # normalize for gene length
+  rpkTable = rawCounts[,-1]
+  rpkTable = (rpkTable*1000)/gffFile$length
+  return(rpkTable)
 }
 
 # Quantile normalization
