@@ -92,7 +92,12 @@ sortThatData = function(rawCounts, infoData, gffData){
   rawCounts = rawCounts[,c("Geneid", row.names(infoData))]
   
   # Change row names of raw counts to "locus_tag, gene name" (only tag, if gff-file has no corresponding gene): 
+  if("Name" %in% colnames(gffData)){
   names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey %in% c("Gene", "gene"),]$Name  # Match locus_tag of gff with Geneid and get gene names
+  } else{
+    names = gffData[gffData$gene_id %in% rawCounts$Geneid & gffData$gbkey %in% c("Gene", "gene"),]$gene_name  # Match locus_tag of gff with Geneid and get gene names
+    
+  }
   names[which(is.na(names))] = ""                                                                        # Otherwise the corresponding entry migh be NA (depends on gfffile) and might cause problems
   row.names(rawCounts) = rawCounts$Geneid
   if(length(names) > 0){
