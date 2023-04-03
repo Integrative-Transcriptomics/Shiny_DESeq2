@@ -5,4 +5,3 @@ source("./Components/ShinySeq_Server.R")
 
 options(shiny.maxRequestSize=1000*1024**2) 
 shinyApp(ui, server)
-

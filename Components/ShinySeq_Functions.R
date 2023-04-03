@@ -61,7 +61,7 @@ addInteractionColumns = function(conditionsColumns, designTable){
 
 
 # Method to sort count data and infoData according to the experimental setup and gff-file
-sortThatData = function(rawCounts, infoData, gffData){
+sortThatData = function(rawCounts, infoData, gffData, gffType){
   # Purpose of this function is to sort the info data 
   # and set the column names of the raw data so they 
   # match with the info data (e.g. remove .bam ending)  
@@ -70,7 +70,7 @@ sortThatData = function(rawCounts, infoData, gffData){
   # Additionally, sample prep table will receive a column with merged conditions
   
   #vec = numeric(0) #Character vector containing the correct order of column names. Will be used to sort info data 
-  
+  if(length(intersect(infoData[,1],colnames(rawCounts)))==0){
   for(i in 1:ncol(rawCounts)){                   # outer loop sets column of raw data... 
     checkCol = colnames(rawCounts)[i] 
     for(j in 1:nrow(infoData)){                  # ...which will be compared with nested loop using grepl
@@ -80,19 +80,21 @@ sortThatData = function(rawCounts, infoData, gffData){
       }
     }
   }
+  }
 
   row.names(infoData) = infoData[,1]                  # set row names of info data to QBiC Code so it can be sorted by column names of count data
   # remove not required columns
   nonRequired = c("Chr", "Start", "End",	"Strand",	"Length",	"gene_name")
   rawCounts = rawCounts[,!colnames(rawCounts) %in% nonRequired]      
-  
+  print(rawCounts)
+  print(infoData)
   #print(c("Geneid", row.names(infoData)))
   #infoData = infoData[colnames(rawCounts)[-1],]       # sort info data according to column name occurence in the counts file. Not occuring names will be removed
   infoData = infoData[row.names(infoData) %in% colnames(rawCounts)[-1],]       # remove all samples from sample prep file which are not in counts
   rawCounts = rawCounts[,c("Geneid", row.names(infoData))]
   
   # Change row names of raw counts to "locus_tag, gene name" (only tag, if gff-file has no corresponding gene): 
-  if("Name" %in% colnames(gffData)){
+  if(gffType == "Bacteria"){
   names = gffData[gffData$locus_tag %in% rawCounts$Geneid & gffData$gbkey %in% c("Gene", "gene"),]$Name  # Match locus_tag of gff with Geneid and get gene names
   } else{
     names = gffData[gffData$gene_id %in% rawCounts$Geneid & gffData$gbkey %in% c("Gene", "gene"),]$gene_name  # Match locus_tag of gff with Geneid and get gene names
@@ -135,9 +137,9 @@ splitRowIndex = function(countTable){
 
 
 # TPM normalization
-normalizeTPM = function(rawCounts, gffFile){
+normalizeTPM = function(rawCounts, gffFile, gffType){
   # normalize for gene length
-  rpkTable = normalizeRPK(rawCounts,gffFile)
+  rpkTable = normalizeRPK(rawCounts,gffFile, gffType)
   
   # normalize for read depth
   totalSampleReadsPerMillion = colSums(rpkTable)/1e6 
@@ -147,9 +149,9 @@ normalizeTPM = function(rawCounts, gffFile){
 }
 
 # Average coverage
-normalizeRPK = function(rawCounts, gffFile){
+normalizeRPK = function(rawCounts, gffFile, gffType){
   # remove locus tags that are not in rawCounts & calculate gene length
-  if("locus_tag" %in% colnames(gffFile)){
+  if(gffType=="Bacteria"){
     gffFile = gffFile[!duplicated(gffFile$locus_tag),c("locus_tag", "start", "end")]
     idcol <- "locus_tag"
   }
@@ -334,15 +336,18 @@ erupt = function(dds_results, logFCthreshold, alpha){
   }
   
   # data.frame for color palette. Will be checked with factor levels of res$expression 
-  sign_colors = c("red", "black", "blue")
+  sign_colors = c("blue", "black", "red")
   sign_status = c("DOWN", "NS", "UP")
   col_assign = data.frame(sign_colors, sign_status)
   volc_palette = col_assign[col_assign$sign_status %in% levels(as.factor(res$Expression)),]$sign_colors
   
   # new column with -log10(padj) - interactive shiny CAN'T handle if you change parameters in aes() of ggplot and behaves weird
   res$neglog10_p_value = -log10(res$padj) 
+  res$Locus_tag=row.names(res)
+  res$Name=res[,"Gene name"]
+  #print(res)
   # plot:
-  vp = ggplot(res, aes(x = log2FoldChange, y = neglog10_p_value, color = Expression, tooltip = padj)) +
+  vp = ggplot(res, aes(label= Locus_tag, label2=Name, x = log2FoldChange, y = neglog10_p_value, color = Expression, label3 = padj)) +
     # scatter:
     geom_point() +
     # lines (alpha and logFC):
@@ -352,7 +357,6 @@ erupt = function(dds_results, logFCthreshold, alpha){
     scale_color_manual(values = volc_palette) +
     # axis formats:
     scale_x_continuous(breaks = c(round(min(res$log2FoldChange))):round(max(res$log2FoldChange))) # integers from rounded minimum to maximum of the log2FC
-  
   return(list(vp, res))
 }
 

@@ -24,6 +24,7 @@ server = shinyServer(function(input, output, session){
     req(input$countFile)
     req(input$infoFile)
     req(input$gffFile)
+    req(input$gffType)
     
     
     ## INPUT RAW DATA ##
@@ -44,7 +45,7 @@ server = shinyServer(function(input, output, session){
       
       ## SORT DATA ## 
       incProgress(0.2, detail = "Parsing and disyplaing data")
-      dats = sortThatData(rawdat, infodat, gffdat)
+      dats = sortThatData(rawdat, infodat, gffdat, input$gffType)
       rawCounts <<- dats[[1]]
       infoData <<- dats[[2]]
       
@@ -117,8 +118,8 @@ server = shinyServer(function(input, output, session){
           
         # TPM-normalization (always performed)
         incProgress(0.2, detail = "Applying TPM normalization")
-        rpkTable <<- normalizeRPK(rawCounts, gffdat)
-        tpmTable <<- normalizeTPM(rawCounts, gffdat)
+        rpkTable <<- normalizeRPK(rawCounts, gffdat, input$gffType)
+        tpmTable <<- normalizeTPM(rawCounts, gffdat, input$gffType)
 
         incProgress(0.2, detail = "Rendering normalized tables")
         output$tpmTable = renderDataTable(datatable(tpmTable) %>% formatRound(columns = c(1:ncol(tpmTable)), digits = 2), rownames = TRUE)
@@ -437,11 +438,26 @@ server = shinyServer(function(input, output, session){
       volc_plot_and_data = erupt(resultsList[[rowIndex]], input$volcanoFcThreshold, input$alpha)  # creates plot object ([[1]]) and data ([[2]])
             
       # render plot:
-      output$volcanoPlot = renderPlot({volc_plot_and_data[[1]]}) 
+      output$volcanoPlot = renderPlotly({volc_plot_and_data[[1]]}) 
       # volcano plot interactive brush info:
-      output$volcanoInfo = renderPrint({
-        brushedPoints(volc_plot_and_data[[2]], input$volcanoBrush)
-      })
+
+      output$download_plotly_widget_html <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".html", sep = "")
+        },
+        content = function(file) {
+          # export plotly html widget as a temp file to download.
+          saveWidget(as_widget(ggplotly(volc_plot_and_data[[1]])), file, selfcontained = TRUE)
+        }
+      )
+      output$download_plotly_widget_svg <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".svg", sep = "")
+        },
+        content = function(file) {
+          ggsave(file=file,plot=volc_plot_and_data[[1]],width=10,height=8)
+        }
+      )
     }) # volcano plot button close
           
           

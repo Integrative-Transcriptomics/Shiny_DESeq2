@@ -1,7 +1,7 @@
 #### ========== PACKAGES FOR SHINYSEQ =========== #####
 
 # Install packages only if not already installed
-packages = c("ggplot2", "pheatmap", "shiny", "shinythemes","shinyBS", "BiocManager", "tidyr", "ggVennDiagram", "UpSetR", "DT", "arrangements", "reshape2")           # required packages
+packages = c("ggplot2", "pheatmap", "shiny", "shinythemes","shinyBS", "BiocManager", "tidyr", "ggVennDiagram", "UpSetR", "DT", "arrangements", "reshape2","svglite")           # required packages
 req_packages = packages[!(packages %in% installed.packages()[,"Package"])]                                               # req_packages contains list of packages that are not already installed
 if(length(req_packages)){install.packages(req_packages)}                                                                 # install req_packages
 # Same for Bioconductor packages
@@ -24,6 +24,8 @@ library(shinythemes)
 library(tidyr)
 library(UpSetR)
 library(DT)
+library(plotly)
+library(svglite)
 
 
 options(repos = BiocManager::repositories()) # required for publishing the tool  

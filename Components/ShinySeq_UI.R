@@ -20,6 +20,10 @@ ui = fluidPage(
                         div(style = "margin-top: -15px"),
                         fileInput("gffFile", "Upload General feature format (.gff)"),
                         div(style = "margin-top: -15px"),
+                        radioButtons("gffType", 
+                                     "Data type:",
+                                     c("Bacteria", 
+                                       "Human")),
                         # Upload button
                         actionButton("upload", "Upload!", width = '100%',class = "btn-warning"),
                         
@@ -255,9 +259,11 @@ ui = fluidPage(
                                                                                                                       step = 0.1,
                                                                                                                       value = 1
                                                                                                                       ),
-                                                                                                          actionButton("volcPlotButton", "Refresh Plot!", width = '100%', class = "btn-warning")
+                                                                                                          actionButton("volcPlotButton", "Refresh Plot!", width = '100%', class = "btn-warning"),
+                                                                                                          downloadButton("download_plotly_widget_html", "download graph as html"),
+                                                                                                          downloadButton("download_plotly_widget_svg", "download graph as svg")
                                                                                                         ),
-                                                                                                        mainPanel(plotOutput("volcanoPlot", brush = "volcanoBrush"), verbatimTextOutput("volcanoInfo"))
+                                                                                                        mainPanel(plotlyOutput("volcanoPlot"), verbatimTextOutput("volcanoInfo"))
                                                                                                         )
                                                                                                )
                                                                           )
