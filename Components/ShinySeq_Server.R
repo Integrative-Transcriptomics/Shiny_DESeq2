@@ -468,8 +468,8 @@ server = shinyServer(function(input, output, session){
        },
        content = function(file) {
          # Sort table by absolute logFC before download
-         dl_table = as.data.frame(resultsList[])
-         dl_table = dl_table[sort(abs(dl_table$log2FoldChange), decreasing = TRUE, index.return = TRUE)[[2]],]
+         # dl_table = as.data.frame(resultsList[])
+         # dl_table = dl_table[sort(abs(dl_table$log2FoldChange), decreasing = TRUE, index.return = TRUE)[[2]],]
          write.csv(dl_table, file, row.names = TRUE)
        }
      )
