@@ -471,7 +471,6 @@ server = shinyServer(function(input, output, session){
         dl_table = as.data.frame(resultsList[rowIndex])
          # dl_table = dl_table[sort(abs(dl_table$log2FoldChange), decreasing = TRUE, index.return = TRUE)[[2]],]
          write.csv(dl_table, file, row.names = TRUE)
-         write.csv(resultsTable,"results.csv", row.names = TRUE)
        }
      )
     output$downloadSignResults = downloadHandler(
